@@ -1,0 +1,17 @@
+{
+  "name": "project_pract",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@11.2.0",
+  "type": "module",
+  "engines": {
+    "node": "22.19.x",
+    "npm": "11.2.x"
+  },
+  "scripts": {
+    "setup:hooks": "git config core.hooksPath .githooks",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "node tests/frontend/run-frontend-tests.mjs",
+    "test:backend": "go test ./..."
+  }
+}
