@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "Running project tests before commit..."
+npm test
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "Tests failed. Commit aborted."
+  exit $status
+fi
+
+echo "All tests passed."
+exit 0
