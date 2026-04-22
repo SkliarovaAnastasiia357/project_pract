@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadEnv } from "../../../src/backend/config/env.ts";
+import { loadEnv } from "../../../src/backend/config/env.js";
 
 describe("loadEnv", () => {
   const base = {
