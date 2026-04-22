@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -20,6 +20,10 @@ afterAll(async () => {
 });
 
 describe("migrations", () => {
+  beforeEach(async () => {
+    await pool.query("TRUNCATE users, sessions CASCADE");
+  });
+
   it("creates users and sessions tables", async () => {
     const res = await pool.query(
       `SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name`,

@@ -17,6 +17,7 @@ runMigrations()
     process.exit(0);
   })
   .catch((err) => {
+    // pool.end() skipped — process.exit terminates all connections at the OS level
     console.error(JSON.stringify({ level: "fatal", msg: "migration failed", err: String(err) }));
     process.exit(1);
   });

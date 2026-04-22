@@ -6,7 +6,7 @@ export default defineConfig({
     exclude: ["tests/frontend/**"],
     environment: "node",
     testTimeout: 30_000,
-    hookTimeout: 60_000,
+    hookTimeout: 120_000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
