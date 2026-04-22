@@ -126,11 +126,20 @@ export function runFrontendTests(): void {
   );
 
   const homeMenu = getNavigationMenu("/home");
-  assert.deepEqual(homeMenu.map((item) => item.label), ["Главная", "Мой профиль", "Выйти"], "меню должно содержать нужные пункты");
+  assert.deepEqual(
+    homeMenu.map((item) => item.label),
+    ["Главная", "Мой профиль", "Новый проект", "Выйти"],
+    "меню должно содержать нужные пункты",
+  );
   assert.equal(homeMenu.find((item) => item.path === "/home")?.active, true, "текущий пункт меню должен быть выделен");
 
   const profileMenu = getNavigationMenu("/profile");
   assert.equal(profileMenu.find((item) => item.path === "/profile")?.active, true, "на странице профиля должен быть активен пункт профиля");
+  assert.equal(
+    profileMenu.find((item) => item.path === "/projects/new")?.active,
+    false,
+    "пункт создания проекта не должен быть активен на странице профиля",
+  );
 
   assert.equal(
     getHomePagePlaceholder().includes("Здесь будет лента проектов / подбор команд"),
@@ -143,8 +152,8 @@ export function runFrontendTests(): void {
     {
       name: "Анна",
       email: "anna@example.com",
-      note: "Редактирование профиля будет в следующей версии",
+      note: "Описание и навыки можно редактировать прямо в профиле",
     },
-    "страница профиля должна показывать имя, email и пометку о следующей версии",
+    "страница профиля должна показывать имя, email и подсказку по редактированию",
   );
 }

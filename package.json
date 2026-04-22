@@ -14,17 +14,22 @@
     "preview": "vite preview",
     "setup:hooks": "git config core.hooksPath .githooks",
     "test": "npm run test:frontend && npm run test:backend",
-    "test:frontend": "node tests/frontend/run-frontend-tests.ts",
+    "test:frontend": "tsx tests/frontend/run-frontend-tests.ts",
     "test:backend": "go test ./..."
   },
   "dependencies": {
+    "@fontsource/manrope": "^5.2.8",
+    "@fontsource/space-grotesk": "^5.2.10",
+    "@types/node": "^25.6.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.14.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "vite": "^5.4.19"
   }
