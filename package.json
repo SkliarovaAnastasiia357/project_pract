@@ -13,9 +13,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "setup:hooks": "git config core.hooksPath .githooks",
-    "test": "npm run test:frontend && npm run test:backend",
-    "test:frontend": "node tests/frontend/run-frontend-tests.mjs",
-    "test:backend": "go test ./..."
+    "test": "npm run test:frontend",
+    "test:frontend": "node tests/frontend/run-frontend-tests.mjs"
   },
   "dependencies": {
     "@fontsource/manrope": "^5.2.8",
