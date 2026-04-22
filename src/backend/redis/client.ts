@@ -10,7 +10,12 @@ export function createRedis(url: string, options: RedisOptions = {}): RedisHandl
   return {
     client,
     async close() {
-      client.disconnect();
+      try {
+        await client.quit();
+      } catch {
+        // Client already closed or connection failed — disconnect idempotently
+        client.disconnect();
+      }
     },
   };
 }
