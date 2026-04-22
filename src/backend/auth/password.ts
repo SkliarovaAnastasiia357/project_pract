@@ -21,16 +21,17 @@ export async function verifyPassword(stored: string, plain: string): Promise<boo
 
 // needsRehash is not exported by @node-rs/argon2 v2.x — parse the PHC string manually.
 // Format: $argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>
-function parseArgon2Params(stored: string): { m: number; t: number; p: number } | null {
-  const match = stored.match(/^\$argon2id\$v=\d+\$m=(\d+),t=(\d+),p=(\d+)\$/);
+function parseArgon2Params(stored: string): { v: number; m: number; t: number; p: number } | null {
+  const match = stored.match(/^\$argon2id\$v=(\d+)\$m=(\d+),t=(\d+),p=(\d+)\$/);
   if (!match) return null;
-  return { m: Number(match[1]), t: Number(match[2]), p: Number(match[3]) };
+  return { v: Number(match[1]), m: Number(match[2]), t: Number(match[3]), p: Number(match[4]) };
 }
 
 export function passwordNeedsRehash(stored: string): boolean {
   const params = parseArgon2Params(stored);
   if (!params) return true;
   return (
+    params.v !== 19 ||
     params.m !== ARGON2_PARAMS.memoryCost ||
     params.t !== ARGON2_PARAMS.timeCost ||
     params.p !== ARGON2_PARAMS.parallelism

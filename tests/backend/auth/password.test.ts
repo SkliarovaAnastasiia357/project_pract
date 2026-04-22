@@ -38,6 +38,18 @@ describe("password", () => {
     expect(passwordNeedsRehash(oldHash)).toBe(true);
   });
 
+  it("needsRehash=true for unparseable string", () => {
+    expect(passwordNeedsRehash("not-a-hash")).toBe(true);
+    expect(passwordNeedsRehash("")).toBe(true);
+    expect(passwordNeedsRehash("$argon2i$v=19$m=1,t=1,p=1$x$y")).toBe(true); // different variant (argon2i, not argon2id)
+  });
+
+  it("needsRehash=true for argon2 v=16 (obsolete)", () => {
+    // Valid shape but old version
+    const oldVersion = "$argon2id$v=16$m=19456,t=2,p=1$AAAA$AAAA";
+    expect(passwordNeedsRehash(oldVersion)).toBe(true);
+  });
+
   it("DUMMY_HASH resolves to argon2id string", async () => {
     const h = await DUMMY_HASH;
     expect(h.startsWith("$argon2id$")).toBe(true);
