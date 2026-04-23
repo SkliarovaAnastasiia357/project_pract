@@ -63,4 +63,27 @@ describe("POST /api/register", () => {
     expect(res.statusCode).toBe(400);
     expect(res.json().fieldErrors.confirmPassword).toBeDefined();
   });
+
+  it("concurrent duplicate registration: one succeeds, others 409 (not 500)", async () => {
+    const payload = {
+      email: "race@example.com",
+      name: "R",
+      password: "secret1",
+      confirmPassword: "secret1",
+    };
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        h.app.inject({ method: "POST", url: "/api/register", payload }),
+      ),
+    );
+    const statuses = responses.map((r) => r.statusCode).sort();
+    const success = statuses.filter((s) => s === 201).length;
+    const conflict = statuses.filter((s) => s === 409).length;
+    const other = statuses.filter((s) => s !== 201 && s !== 409).length;
+    expect(success).toBe(1);
+    expect(conflict + other).toBe(9);
+    // Strict assertion: no 500s (the bug we just fixed).
+    const server_errors = statuses.filter((s) => s >= 500).length;
+    expect(server_errors).toBe(0);
+  });
 });

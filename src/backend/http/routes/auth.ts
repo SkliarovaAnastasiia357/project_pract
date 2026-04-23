@@ -31,10 +31,24 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       });
     }
     const passwordHash = await hashPassword(input.password);
-    const [row] = await db
-      .insert(users)
-      .values({ email: input.email, name: input.name, passwordHash })
-      .returning();
+    let row;
+    try {
+      const inserted = await db
+        .insert(users)
+        .values({ email: input.email, name: input.name, passwordHash })
+        .returning();
+      row = inserted[0];
+    } catch (err) {
+      // Race: another request inserted the same email between our SELECT and INSERT.
+      // Drizzle wraps pg errors in DrizzleQueryError, check the cause property.
+      const pgError = err && typeof err === "object" && "cause" in err ? (err as { cause?: { code?: string } }).cause : err;
+      if (pgError && typeof pgError === "object" && "code" in pgError && (pgError as { code: string }).code === "23505") {
+        throw new ApiError("Пользователь с таким email уже существует", 409, {
+          email: "Пользователь с таким email уже существует",
+        });
+      }
+      throw err;
+    }
     if (!row) throw new ApiError("Внутренняя ошибка сервера", 500);
 
     const { rawToken } = await createSession(db, row.id, {
