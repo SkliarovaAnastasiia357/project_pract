@@ -3,10 +3,17 @@ import { eq } from "drizzle-orm";
 import { registerSchema, loginSchema } from "../../auth/schemas.js";
 import { hashPassword, verifyPassword, dummyVerify, passwordNeedsRehash } from "../../auth/password.js";
 import { issueAccessToken } from "../../auth/tokens.js";
-import { createSession } from "../../auth/sessions.js";
+import {
+  createSession,
+  rotateSession,
+  revokeByRawToken,
+  revokeAllForUser,
+  RefreshReuseDetected,
+} from "../../auth/sessions.js";
 import { users } from "../../db/schema.js";
 import { ApiError } from "../errors.js";
 import { registerAuthRateLimits } from "../middleware/rateLimits.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
   const limits = await registerAuthRateLimits(app);
@@ -103,5 +110,57 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       token,
       user: { id: user.id, email: user.email, name: user.name, bio: user.bio },
     };
+  });
+
+  function clearRefreshCookie(reply: FastifyReply): void {
+    reply.clearCookie("tn_refresh", { path: "/api" });
+  }
+
+  app.post("/api/auth/refresh", { preHandler: limits.refreshLimit }, async (req, reply) => {
+    const raw = req.cookies.tn_refresh;
+    if (!raw) {
+      clearRefreshCookie(reply);
+      throw new ApiError("Требуется авторизация", 401);
+    }
+    try {
+      const rotated = await rotateSession(db, raw, {
+        ttlSec: env.REFRESH_TTL_SEC,
+        userAgent: req.headers["user-agent"] ?? null,
+        ip: req.ip,
+      });
+      const [user] = await db.select().from(users).where(eq(users.id, rotated.userId)).limit(1);
+      if (!user) {
+        clearRefreshCookie(reply);
+        throw new ApiError("Требуется авторизация", 401);
+      }
+      const token = await issueAccessToken({
+        userId: user.id,
+        secret: env.AUTH_ACCESS_SECRET,
+        ttlSec: env.ACCESS_TTL_SEC,
+      });
+      setRefreshCookie(reply, rotated.rawToken);
+      return { token, user: { id: user.id, email: user.email, name: user.name, bio: user.bio } };
+    } catch (err) {
+      clearRefreshCookie(reply);
+      if (err instanceof RefreshReuseDetected) {
+        req.log.warn({ ip: req.ip, ua: req.headers["user-agent"] }, "refresh_reuse_detected");
+      }
+      throw new ApiError("Требуется авторизация", 401);
+    }
+  });
+
+  app.post("/api/logout", async (req, reply) => {
+    const raw = req.cookies.tn_refresh;
+    if (raw) await revokeByRawToken(db, raw);
+    clearRefreshCookie(reply);
+    reply.code(204);
+    return null;
+  });
+
+  app.post("/api/auth/logout-all", { preHandler: requireAuth }, async (req, reply) => {
+    await revokeAllForUser(db, req.user!.id);
+    clearRefreshCookie(reply);
+    reply.code(204);
+    return null;
   });
 }
