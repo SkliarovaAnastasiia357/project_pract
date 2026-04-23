@@ -3,11 +3,10 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { createHash } from "node:crypto";
 import { users, sessions } from "../../../src/backend/db/schema.js";
 import {
   createSession, rotateSession, revokeByRawToken, revokeAllForUser,
-  RefreshInvalid, RefreshReuseDetected,
+  RefreshInvalid, RefreshReuseDetected, sha256,
 } from "../../../src/backend/auth/sessions.js";
 
 let container: StartedPostgreSqlContainer;
@@ -34,10 +33,6 @@ beforeEach(async () => {
   );
   userId = res.rows[0].id;
 });
-
-function sha256(s: string): string {
-  return createHash("sha256").update(s).digest("hex");
-}
 
 describe("sessions", () => {
   it("createSession inserts hashed token, returns raw", async () => {
