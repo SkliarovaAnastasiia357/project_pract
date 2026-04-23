@@ -1,0 +1,66 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
+
+let h: TestHarness;
+beforeAll(async () => { h = await createTestApp(); }, 180_000);
+afterAll(async () => { await h?.close(); });
+beforeEach(async () => {
+  await resetDb(h.pool);
+  await h.redis.flushall();
+});
+
+describe("POST /api/register", () => {
+  it("201 and returns token+user with refresh cookie", async () => {
+    const res = await h.app.inject({
+      method: "POST",
+      url: "/api/register",
+      payload: { email: "Test@Example.COM", name: "Test", password: "secret1", confirmPassword: "secret1" },
+    });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.token).toMatch(/^eyJ/);
+    expect(body.user.email).toBe("test@example.com");
+    expect(body.user.bio).toBe("");
+    const setCookie = res.headers["set-cookie"];
+    const cookie = Array.isArray(setCookie) ? setCookie.join(";") : setCookie;
+    expect(cookie).toMatch(/tn_refresh=/);
+    expect(cookie).toMatch(/HttpOnly/i);
+    expect(cookie).toMatch(/Path=\/api/i);
+    expect(cookie).toMatch(/SameSite=Strict/i);
+  });
+
+  it("409 for duplicate email", async () => {
+    await h.app.inject({
+      method: "POST",
+      url: "/api/register",
+      payload: { email: "dup@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
+    });
+    const res = await h.app.inject({
+      method: "POST",
+      url: "/api/register",
+      payload: { email: "dup@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().fieldErrors.email).toBeDefined();
+  });
+
+  it("400 for short password", async () => {
+    const res = await h.app.inject({
+      method: "POST",
+      url: "/api/register",
+      payload: { email: "short@example.com", name: "A", password: "1", confirmPassword: "1" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().fieldErrors.password).toBeDefined();
+  });
+
+  it("400 for mismatched confirmPassword", async () => {
+    const res = await h.app.inject({
+      method: "POST",
+      url: "/api/register",
+      payload: { email: "mismatch@example.com", name: "A", password: "secret1", confirmPassword: "secret2" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().fieldErrors.confirmPassword).toBeDefined();
+  });
+});
