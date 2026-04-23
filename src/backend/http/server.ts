@@ -3,7 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import type { Db } from "../db/client.js";
-import type Redis from "ioredis";
+import { type Redis } from "ioredis";
 import type { Env } from "../config/env.js";
 import { errorHandler } from "./errors.js";
 

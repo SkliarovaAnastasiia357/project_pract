@@ -7,6 +7,8 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../../../../src/backend/http/server.js";
 import { registerAuthRoutes } from "../../../../src/backend/http/routes/auth.js";
+import { registerMeRoute } from "../../../../src/backend/http/routes/me.js";
+import { registerHealthRoutes } from "../../../../src/backend/http/routes/health.js";
 import * as schema from "../../../../src/backend/db/schema.js";
 
 const SECRET = "x".repeat(48);
@@ -41,7 +43,9 @@ export async function createTestApp(): Promise<TestHarness> {
   } as any;
 
   const app = await buildApp({ env, db: db as any, redis });
+  await registerHealthRoutes(app);
   await registerAuthRoutes(app);
+  await registerMeRoute(app);
   return {
     app,
     pool,
