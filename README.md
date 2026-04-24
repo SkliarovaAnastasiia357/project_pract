@@ -49,14 +49,15 @@ https://teamnova.tw1.su
 
 1. Для специалистов: Найти реальный проект под свой стек технологий и присоединиться к нему за 5 минут;.
 2. Для лидеров проектов: Получить отклики только от тех, у кого в профиле указаны нужные навыки (фильтр «шума»);
-3. Для всех: Прозрачность — сразу видно, кому нужен Backend-разработчик на Go, а кому — UX/UI-дизайнер.
+3. Для всех: Прозрачность — сразу видно, кому нужен Backend-разработчик, а кому — UX/UI-дизайнер.
 ---
 
 ## Технологический стек
 
 **Frontend:** React + TypeScript + CSS  
-**Backend:** Go (Golang)  
-**База данных:** PostgreSQL
+**Backend:** Node.js + TypeScript + Fastify  
+**База данных:** PostgreSQL + Redis  
+**Инфраструктура:** Docker + Nginx
 
 ---
 
@@ -68,19 +69,23 @@ https://teamnova.tw1.su
 
 ### TypeScript
 
-Добавляет строгую типизацию, снижает количество ошибок и упрощает поддержку кода в долгосрочной перспективе.
+Добавляет строгую типизацию, снижает количество ошибок и упрощает поддержку кода в долгосрочной перспективе — используется как на фронтенде, так и на бекенде.
 
 ### CSS
 
 Гибко управляет стилями и адаптивностью интерфейса, позволяет создавать удобный и современный UI.
 
-### Golang
+### Fastify
 
-Высокая производительность и эффективная работа с конкурентностью. Хорошо подходит для масштабируемых веб-сервисов.
+Высокая производительность, низкий overhead, встроенная поддержка JSON Schema и плагинной архитектуры. Хорошо подходит для REST API на Node.js.
 
 ### PostgreSQL
 
 Надежная реляционная база данных с поддержкой сложных запросов, высокой целостностью данных и хорошей производительностью.
+
+### Redis
+
+Используется для хранения сессий refresh-токенов и rate-limiting на auth-эндпоинтах.
 
 ---
 
@@ -88,7 +93,7 @@ https://teamnova.tw1.su
 
 - `UserStories/` — описание проекта и PDF с user stories
 - `tests/frontend/` — frontend-тесты
-- `tests/backend/` — backend-тесты
+- `tests/backend/` — backend-тесты на Vitest + testcontainers
 - `docs/MODULE_PROGRESS.md` — файл для отметки выполнения модулей
 - `.github/workflows/tests.yml` — запуск тестов в GitHub Actions
 - `.githooks/pre-commit` — проверка тестов перед коммитом
@@ -97,29 +102,63 @@ https://teamnova.tw1.su
 
 ## Установка и запуск
 
-1. Установить `Node.js`.
-2. Установить npm-зависимости:
+### Docker (рекомендуется)
 
-```powershell
+Требования: Docker + Docker Compose.
+
+1. Скопировать файл окружения и заполнить секреты:
+
+```bash
+cp .env.example .env
+# отредактируй .env: JWT_SECRET, DB_PASSWORD, REDIS_URL и др.
+```
+
+2. Поднять весь стек (Postgres, Redis, backend, Nginx):
+
+```bash
+cd docker && docker compose up -d --build
+```
+
+Приложение доступно на `http://localhost` (через Nginx).
+
+### Локальная разработка
+
+Требования: Node.js 22+, Docker (для Postgres и Redis).
+
+1. Установить зависимости:
+
+```bash
 npm install
+```
+
+2. Скопировать и заполнить `.env`:
+
+```bash
+cp .env.example .env
 ```
 
 3. Подключить git hook:
 
-```powershell
+```bash
 npm run setup:hooks
 ```
 
-4. Запустить тесты:
+4. Запустить бекенд в dev-режиме:
 
-```powershell
+```bash
+npm run dev:backend
+```
+
+5. Запустить тесты:
+
+```bash
 npm run test:frontend
 npm run test:backend
 ```
 
-Общий запуск:
+Общий запуск тестов:
 
-```powershell
+```bash
 npm test
 ```
 
@@ -128,6 +167,20 @@ npm test
 ## Статус тестов
 
 - Frontend-тесты запускаются командой `npm run test:frontend`
-- Backend-тесты запускаются командой `npm run test:backend`
+- Backend-тесты запускаются командой `npm run test:backend` (Vitest + testcontainers, требует Docker)
 - Перед коммитом тесты проверяются через `pre-commit`
 - В GitHub статус тестов отображается через workflow `Tests`
+
+---
+
+## Спринт 2 — Аутентификация
+
+Реализовано:
+- Реальный Node.js + TypeScript backend (замена прежнего mock-only фронта)
+- argon2id пароли, JWT access (15 мин) + DB-backed refresh token (30 дней) с ротацией и reuse-detection
+- Rate-limit на auth-эндпоинтах через Redis
+- CORS same-origin за Nginx, HttpOnly + Secure + SameSite=Strict refresh cookie
+- Cross-tab синхронизация через BroadcastChannel, single-flight /refresh на фронте
+
+Подробности: [docs/superpowers/specs/2026-04-24-sprint2-auth-ts-design.md](docs/superpowers/specs/2026-04-24-sprint2-auth-ts-design.md)  
+OpenAPI-спецификация: [docs/api-spec.yaml](docs/api-spec.yaml)

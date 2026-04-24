@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: Teamnova API
+  version: 0.2.0
+  description: |
+    Sprint 2 — Authentication endpoints.
+    Access JWT (HS256, 15min) returned in body; refresh token (opaque, 30d) in
+    HttpOnly+Secure+SameSite=Strict cookie `tn_refresh` on path `/api`.
+servers:
+  - url: /
+    description: Same-origin (served via Nginx reverse proxy on production VDS)
+paths:
+  /api/register:
+    post:
+      summary: Register new user
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, name, password, confirmPassword]
+              properties:
+                email: { type: string, format: email, maxLength: 254 }
+                name:  { type: string, minLength: 1, maxLength: 80 }
+                password: { type: string, minLength: 6, maxLength: 128 }
+                confirmPassword: { type: string }
+      responses:
+        "201":
+          description: Registered
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: "tn_refresh=<opaque>; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age=2592000"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/login:
+    post:
+      summary: Login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/auth/refresh:
+    post:
+      summary: Rotate refresh token, issue new access JWT
+      tags: [auth]
+      description: |
+        Reads `tn_refresh` cookie; rotates the session (old revoked with
+        replaced_by_id, new issued). On replay of a revoked token beyond the
+        5-second grace window, revokes all user sessions (reuse detection).
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "401":
+          description: Invalid or reused refresh token; cookie cleared
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/logout:
+    post:
+      summary: Revoke current session, clear cookie (idempotent)
+      tags: [auth]
+      responses:
+        "204": { description: No Content }
+  /api/auth/logout-all:
+    post:
+      summary: Revoke all active sessions for the current user
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/me:
+    get:
+      summary: Current user
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /healthz:
+    get:
+      summary: Liveness probe (no DB/Redis check)
+      tags: [ops]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+  /readyz:
+    get:
+      summary: Readiness probe (pings DB + Redis)
+      tags: [ops]
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  db: { type: string }
+                  redis: { type: string }
+        "503":
+          description: Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  err: { type: string }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      required: [id, email, name, bio]
+      properties:
+        id:    { type: string, format: uuid }
+        email: { type: string, format: email }
+        name:  { type: string }
+        bio:   { type: string }
+    AuthSession:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: "HS256 access JWT, 15 minutes" }
+        user:  { $ref: "#/components/schemas/User" }
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:     { type: string }
+        fieldErrors: { type: object, additionalProperties: { type: string } }
+  responses:
+    ValidationError:
+      description: Validation or conflict failure
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Unauthorized:
+      description: Unauthorized
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    RateLimited:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+      headers:
+        Retry-After: { schema: { type: integer } }
