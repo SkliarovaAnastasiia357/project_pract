@@ -1,6 +1,6 @@
 # Кейс: Разработка цифровой платформы для подбора участников и формирования команд
 
-![Tests](https://github.com/SkliarovaAnastasiia357/project_pract/actions/workflows/tests.yml/badge.svg?branch=qa)
+![Tests](https://github.com/SkliarovaAnastasiia357/project_pract/actions/workflows/tests.yml/badge.svg?branch=main)
 
 ## Команда проекта
 
