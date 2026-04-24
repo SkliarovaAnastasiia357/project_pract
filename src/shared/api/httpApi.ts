@@ -10,97 +10,124 @@ import type {
   User,
 } from "../types.ts";
 import { ApiClientError, type ApiClient } from "./contracts.ts";
+import { getAccessToken, refreshSession, setSession, UnauthorizedError } from "./authClient.ts";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const API_BASE_URL: string = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) ?? "";
 
 type JsonPayload = Record<string, unknown> | undefined;
 
-async function request<T>(path: string, method: string, token?: string, body?: JsonPayload): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+async function rawRequest(
+  path: string,
+  method: string,
+  body?: JsonPayload,
+  authToken?: string | null,
+): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
     method,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+}
 
-  if (!response.ok) {
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) {
     let message = "Ошибка запроса";
     let fieldErrors: Record<string, string> | undefined;
-
     try {
-      const errorPayload = (await response.json()) as {
+      const payload = (await res.json()) as {
         message?: string;
         fieldErrors?: Record<string, string>;
         errors?: Record<string, string>;
       };
-      message = errorPayload.message ?? message;
-      fieldErrors = errorPayload.fieldErrors ?? errorPayload.errors;
+      message = payload.message ?? message;
+      fieldErrors = payload.fieldErrors ?? payload.errors;
     } catch {
-      message = response.statusText || message;
+      message = res.statusText || message;
     }
-
-    throw new ApiClientError(message, response.status, fieldErrors);
+    throw new ApiClientError(message, res.status, fieldErrors);
   }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
 
-  if (response.status === 204) {
-    return undefined as T;
+type RequestOptions = { skipRefresh?: boolean };
+
+async function request<T>(
+  path: string,
+  method: string,
+  body?: JsonPayload,
+  opts: RequestOptions = {},
+): Promise<T> {
+  const token = getAccessToken();
+  let res = await rawRequest(path, method, body, token);
+  if (res.status === 401 && !opts.skipRefresh) {
+    const refreshed = await refreshSession(API_BASE_URL);
+    if (!refreshed) throw new UnauthorizedError();
+    res = await rawRequest(path, method, body, refreshed.token);
   }
-
-  return (await response.json()) as T;
+  return handleResponse<T>(res);
 }
 
 export const httpApi: ApiClient = {
-  register(input: RegisterInput): Promise<AuthSession> {
-    return request<AuthSession>("/api/register", "POST", undefined, input);
+  async register(input: RegisterInput): Promise<AuthSession> {
+    const session = await request<AuthSession>("/api/register", "POST", input, { skipRefresh: true });
+    setSession(session);
+    return session;
   },
 
-  login(input: LoginInput): Promise<AuthSession> {
-    return request<AuthSession>("/api/login", "POST", undefined, input);
+  async login(input: LoginInput): Promise<AuthSession> {
+    const session = await request<AuthSession>("/api/login", "POST", input, { skipRefresh: true });
+    setSession(session);
+    return session;
   },
 
-  logout(token: string): Promise<void> {
-    return request<void>("/api/logout", "POST", token);
+  async logout(): Promise<void> {
+    await request<void>("/api/logout", "POST", undefined, { skipRefresh: true });
+    setSession(null);
   },
 
-  getMe(token: string): Promise<User> {
-    return request<User>("/api/me", "GET", token);
+  getMe(_token: string): Promise<User> {
+    return request<User>("/api/me", "GET");
   },
 
-  getProfile(token: string): Promise<Profile> {
-    return request<Profile>("/api/profile", "GET", token);
+  getProfile(_token: string): Promise<Profile> {
+    return request<Profile>("/api/profile", "GET");
   },
 
-  updateProfile(token: string, input: ProfileInput): Promise<Profile> {
-    return request<Profile>("/api/profile", "PATCH", token, input);
+  updateProfile(_token: string, input: ProfileInput): Promise<Profile> {
+    return request<Profile>("/api/profile", "PATCH", input);
   },
 
-  addSkill(token: string, input: SkillInput): Promise<Profile> {
-    return request<Profile>("/api/profile/skills", "POST", token, input);
+  addSkill(_token: string, input: SkillInput): Promise<Profile> {
+    return request<Profile>("/api/profile/skills", "POST", input);
   },
 
-  deleteSkill(token: string, skillId: string): Promise<Profile> {
-    return request<Profile>(`/api/profile/skills/${skillId}`, "DELETE", token);
+  deleteSkill(_token: string, skillId: string): Promise<Profile> {
+    return request<Profile>(`/api/profile/skills/${skillId}`, "DELETE");
   },
 
-  listProjects(token: string): Promise<Project[]> {
-    return request<Project[]>("/api/projects", "GET", token);
+  listProjects(_token: string): Promise<Project[]> {
+    return request<Project[]>("/api/projects", "GET");
   },
 
-  createProject(token: string, input: ProjectInput): Promise<Project> {
-    return request<Project>("/api/projects", "POST", token, input);
+  createProject(_token: string, input: ProjectInput): Promise<Project> {
+    return request<Project>("/api/projects", "POST", input);
   },
 
-  getProject(token: string, projectId: string): Promise<Project> {
-    return request<Project>(`/api/projects/${projectId}`, "GET", token);
+  getProject(_token: string, id: string): Promise<Project> {
+    return request<Project>(`/api/projects/${id}`, "GET");
   },
 
-  updateProject(token: string, projectId: string, input: ProjectInput): Promise<Project> {
-    return request<Project>(`/api/projects/${projectId}`, "PUT", token, input);
+  updateProject(_token: string, id: string, input: ProjectInput): Promise<Project> {
+    return request<Project>(`/api/projects/${id}`, "PUT", input);
   },
 
-  deleteProject(token: string, projectId: string): Promise<void> {
-    return request<void>(`/api/projects/${projectId}`, "DELETE", token);
+  deleteProject(_token: string, id: string): Promise<void> {
+    return request<void>(`/api/projects/${id}`, "DELETE");
   },
 };

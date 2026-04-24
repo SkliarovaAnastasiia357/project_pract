@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
 
 import { apiClient } from "../../shared/api/index.ts";
-import { SESSION_TOKEN_KEY } from "../../shared/api/contracts.ts";
-import { clearKey, storage } from "../../shared/storage.ts";
 import type { AuthSession, AuthStatus, LoginInput, RegisterInput, User } from "../../shared/types.ts";
 
 type AuthContextValue = {
@@ -17,58 +15,24 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const initialToken = storage.getItem(SESSION_TOKEN_KEY);
+  const initialToken: string | null = null;
   const [status, setStatus] = useState<AuthStatus>(initialToken ? "booting" : "anonymous");
   const [session, setSession] = useState<AuthSession | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    const token = storage.getItem(SESSION_TOKEN_KEY);
-
-    if (!token) {
-      setStatus("anonymous");
-      return undefined;
-    }
-
-    const bootToken = token;
-
-    async function bootstrapSession() {
-      try {
-        const user = await apiClient.getMe(bootToken);
-
-        if (cancelled) {
-          return;
-        }
-
-        setSession({ token: bootToken, user });
-        setStatus("authenticated");
-      } catch {
-        clearKey(SESSION_TOKEN_KEY);
-
-        if (!cancelled) {
-          setSession(null);
-          setStatus("anonymous");
-        }
-      }
-    }
-
-    void bootstrapSession();
-
-    return () => {
-      cancelled = true;
-    };
+    // Task 16 will bootstrap the session via refreshSession() on mount.
+    setStatus("anonymous");
+    return undefined;
   }, []);
 
   function persistSession(nextSession: AuthSession | null) {
     setSession(nextSession);
 
     if (nextSession) {
-      storage.setItem(SESSION_TOKEN_KEY, nextSession.token);
       setStatus("authenticated");
       return;
     }
 
-    clearKey(SESSION_TOKEN_KEY);
     setStatus("anonymous");
   }
 
