@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
 import { apiClient } from "../../shared/api/index.ts";
-import { refreshSession, setSession as setAuthClientSession } from "../../shared/api/authClient.ts";
+import {
+  refreshSession,
+  setSession as setAuthClientSession,
+  subscribeAuthBroadcast,
+} from "../../shared/api/authClient.ts";
 import type { AuthSession, AuthStatus, LoginInput, RegisterInput, User } from "../../shared/types.ts";
 
 type AuthContextValue = {
@@ -36,9 +40,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => {
+    const unsub = subscribeAuthBroadcast((msg) => {
+      if (msg.type === "refreshed") {
+        setSession(msg.session);
+        setStatus("authenticated");
+      } else if (msg.type === "logout") {
+        setSession(null);
+        setStatus("anonymous");
+      }
+    });
+    return unsub;
+  }, []);
+
   function applySession(next: AuthSession | null): void {
     setSession(next);
-    setAuthClientSession(next);
+    setAuthClientSession(next, { broadcast: true });
     setStatus(next ? "authenticated" : "anonymous");
   }
 
