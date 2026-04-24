@@ -11,7 +11,6 @@ import type {
   User,
 } from "../types.ts";
 
-export const SESSION_TOKEN_KEY = "teamnova.session.token.v1";
 export const MOCK_DB_KEY = "teamnova.mock-db.v1";
 
 export class ApiClientError extends Error {

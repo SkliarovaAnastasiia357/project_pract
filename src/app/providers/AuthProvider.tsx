@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
-
 import { apiClient } from "../../shared/api/index.ts";
-import { SESSION_TOKEN_KEY } from "../../shared/api/contracts.ts";
-import { clearKey, storage } from "../../shared/storage.ts";
+import {
+  refreshSession,
+  setSession as setAuthClientSession,
+  subscribeAuthBroadcast,
+} from "../../shared/api/authClient.ts";
 import type { AuthSession, AuthStatus, LoginInput, RegisterInput, User } from "../../shared/types.ts";
 
 type AuthContextValue = {
@@ -17,71 +19,56 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const initialToken = storage.getItem(SESSION_TOKEN_KEY);
-  const [status, setStatus] = useState<AuthStatus>(initialToken ? "booting" : "anonymous");
+  const [status, setStatus] = useState<AuthStatus>("booting");
   const [session, setSession] = useState<AuthSession | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const token = storage.getItem(SESSION_TOKEN_KEY);
-
-    if (!token) {
-      setStatus("anonymous");
-      return undefined;
-    }
-
-    const bootToken = token;
-
-    async function bootstrapSession() {
-      try {
-        const user = await apiClient.getMe(bootToken);
-
-        if (cancelled) {
-          return;
-        }
-
-        setSession({ token: bootToken, user });
+    (async () => {
+      const restored = await refreshSession();
+      if (cancelled) return;
+      if (restored) {
+        setSession(restored);
         setStatus("authenticated");
-      } catch {
-        clearKey(SESSION_TOKEN_KEY);
-
-        if (!cancelled) {
-          setSession(null);
-          setStatus("anonymous");
-        }
+      } else {
+        setSession(null);
+        setStatus("anonymous");
       }
-    }
-
-    void bootstrapSession();
-
+    })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  function persistSession(nextSession: AuthSession | null) {
-    setSession(nextSession);
+  useEffect(() => {
+    const unsub = subscribeAuthBroadcast((msg) => {
+      if (msg.type === "refreshed") {
+        setSession(msg.session);
+        setStatus("authenticated");
+      } else if (msg.type === "logout") {
+        setSession(null);
+        setStatus("anonymous");
+      }
+    });
+    return unsub;
+  }, []);
 
-    if (nextSession) {
-      storage.setItem(SESSION_TOKEN_KEY, nextSession.token);
-      setStatus("authenticated");
-      return;
-    }
-
-    clearKey(SESSION_TOKEN_KEY);
-    setStatus("anonymous");
+  function applySession(next: AuthSession | null): void {
+    setSession(next);
+    setAuthClientSession(next, { broadcast: true });
+    setStatus(next ? "authenticated" : "anonymous");
   }
 
   async function login(input: LoginInput): Promise<AuthSession> {
-    const nextSession = await apiClient.login(input);
-    persistSession(nextSession);
-    return nextSession;
+    const next = await apiClient.login(input);
+    applySession(next);
+    return next;
   }
 
   async function register(input: RegisterInput): Promise<AuthSession> {
-    const nextSession = await apiClient.register(input);
-    persistSession(nextSession);
-    return nextSession;
+    const next = await apiClient.register(input);
+    applySession(next);
+    return next;
   }
 
   async function logout(): Promise<void> {
@@ -89,37 +76,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         await apiClient.logout(session.token);
       } catch {
-        // Client state still has to be cleared even if the backend logout fails.
+        // Ignore server errors on logout — always clear local state.
       }
     }
-
-    persistSession(null);
+    applySession(null);
   }
 
-  function mergeCurrentUser(patch: Partial<User>) {
-    setSession((currentSession) =>
-      currentSession
-        ? {
-            ...currentSession,
-            user: {
-              ...currentSession.user,
-              ...patch,
-            },
-          }
-        : currentSession,
+  function mergeCurrentUser(patch: Partial<User>): void {
+    setSession((current) =>
+      current
+        ? { ...current, user: { ...current.user, ...patch } }
+        : current,
     );
   }
 
   return (
     <AuthContext.Provider
-      value={{
-        status,
-        session,
-        login,
-        register,
-        logout,
-        mergeCurrentUser,
-      }}
+      value={{ status, session, login, register, logout, mergeCurrentUser }}
     >
       {children}
     </AuthContext.Provider>
@@ -127,11 +100,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 }
 
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
-
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
 }

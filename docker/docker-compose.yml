@@ -1,0 +1,58 @@
+name: teamnova
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: teamnova
+      POSTGRES_USER: teamnova
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamnova -d teamnova"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://teamnova:${POSTGRES_PASSWORD}@postgres:5432/teamnova
+      REDIS_URL: redis://redis:6379
+      AUTH_ACCESS_SECRET: ${AUTH_ACCESS_SECRET:?required}
+      COOKIE_SECURE: "false"
+      LOG_LEVEL: info
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  pgdata:
