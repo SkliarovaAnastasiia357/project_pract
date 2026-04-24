@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let h: TestHarness;
-beforeAll(async () => { h = await createTestApp(); }, 180_000);
-afterAll(async () => { await h?.close(); });
-beforeEach(async () => {
-  await resetDb(h.pool);
-  await h.redis.flushall();
-});
+describeWithContainers("POST /api/register", () => {
+  let h: TestHarness;
 
-describe("POST /api/register", () => {
+  beforeAll(async () => { h = await createTestApp(); }, 180_000);
+  afterAll(async () => { await h?.close(); });
+  beforeEach(async () => {
+    await resetDb(h.pool);
+    await h.redis.flushall();
+  });
+
   it("201 and returns token+user with refresh cookie", async () => {
     const res = await h.app.inject({
       method: "POST",
@@ -82,7 +84,6 @@ describe("POST /api/register", () => {
     const other = statuses.filter((s) => s !== 201 && s !== 409).length;
     expect(success).toBe(1);
     expect(conflict + other).toBe(9);
-    // Strict assertion: no 500s (the bug we just fixed).
     const server_errors = statuses.filter((s) => s >= 500).length;
     expect(server_errors).toBe(0);
   });

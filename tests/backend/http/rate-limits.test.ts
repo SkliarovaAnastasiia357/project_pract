@@ -3,26 +3,26 @@ import { RedisContainer, StartedRedisContainer } from "@testcontainers/redis";
 import Redis from "ioredis";
 import { buildApp } from "../../../src/backend/http/server.js";
 import { registerAuthRateLimits } from "../../../src/backend/http/middleware/rateLimits.js";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let rd: StartedRedisContainer;
-let redis: Redis;
+describeWithContainers("rate limits", () => {
+  let rd: StartedRedisContainer;
+  let redis: Redis;
 
-beforeAll(async () => {
-  rd = await new RedisContainer("redis:7-alpine").start();
-  redis = new Redis(rd.getConnectionUrl());
-}, 120_000);
+  beforeAll(async () => {
+    rd = await new RedisContainer("redis:7-alpine").start();
+    redis = new Redis(rd.getConnectionUrl());
+  }, 120_000);
 
-afterAll(async () => {
-  try { await redis?.quit(); } catch { redis?.disconnect(); }
-  await rd?.stop();
-});
+  afterAll(async () => {
+    try { await redis?.quit(); } catch { redis?.disconnect(); }
+    await rd?.stop();
+  });
 
-beforeEach(async () => {
-  // flush between tests so counters don't bleed across
-  await redis?.flushall();
-});
+  beforeEach(async () => {
+    await redis?.flushall();
+  });
 
-describe("rate limits", () => {
   it("registerLimit blocks 6th request from same IP with 429 and retryAfter", async () => {
     const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
@@ -36,7 +36,7 @@ describe("rate limits", () => {
     const blocked = await app.inject({ method: "POST", url: "/r", remoteAddress: "1.2.3.4" });
     expect(blocked.statusCode).toBe(429);
     const body = blocked.json();
-    expect(body.message).toMatch(/Слишком/);
+    expect(body.message).toMatch(/РЎР»РёС€РєРѕРј/);
     expect(body.retryAfter).toBeDefined();
 
     await app.close();
@@ -70,7 +70,6 @@ describe("rate limits", () => {
       expect(res.statusCode).toBe(200);
     }
 
-    // 6th attempt from a fresh IP — blocked by email limit
     const blocked = await app.inject({
       method: "POST",
       url: "/l",
@@ -78,7 +77,7 @@ describe("rate limits", () => {
       payload: { email: "victim@example.com" },
     });
     expect(blocked.statusCode).toBe(429);
-    expect(blocked.json().message).toMatch(/Слишком/);
+    expect(blocked.json().message).toMatch(/РЎР»РёС€РєРѕРј/);
 
     await app.close();
   });
@@ -88,7 +87,6 @@ describe("rate limits", () => {
     const limits = await registerAuthRateLimits(app);
     app.post("/l2", { preHandler: [limits.loginIpLimit, limits.loginEmailLimit] }, async () => ({ ok: true }));
 
-    // 5 requests to user-a, then 1 to user-b — user-b should still be allowed
     for (let i = 0; i < 5; i++) {
       const res = await app.inject({
         method: "POST",
@@ -131,12 +129,10 @@ describe("rate limits", () => {
     const limits = await registerAuthRateLimits(app);
     app.post("/r3", { preHandler: limits.registerLimit }, async () => ({ ok: true }));
 
-    // 5 requests from IP-A exhausts its limit
     for (let i = 0; i < 5; i++) {
       await app.inject({ method: "POST", url: "/r3", remoteAddress: "9.9.9.1" });
     }
 
-    // IP-B is unaffected
     const res = await app.inject({ method: "POST", url: "/r3", remoteAddress: "9.9.9.2" });
     expect(res.statusCode).toBe(200);
 

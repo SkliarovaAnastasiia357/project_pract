@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
-
-let h: TestHarness;
-beforeAll(async () => { h = await createTestApp(); }, 180_000);
-afterAll(async () => { await h?.close(); });
-beforeEach(async () => {
-  await resetDb(h.pool);
-  await h.redis.flushall();
-});
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
 function extractCookie(setCookie: string | string[] | undefined): string | undefined {
   const s = Array.isArray(setCookie) ? setCookie.join(";") : setCookie;
@@ -15,18 +8,27 @@ function extractCookie(setCookie: string | string[] | undefined): string | undef
   return m?.[1];
 }
 
-async function registerSession(): Promise<{ cookie: string; token: string }> {
-  const res = await h.app.inject({
-    method: "POST", url: "/api/register",
-    payload: { email: "a@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
-  });
-  const cookie = extractCookie(res.headers["set-cookie"])!;
-  const token = res.json().token;
-  return { cookie, token };
-}
+describeWithContainers("auth logout flows", () => {
+  let h: TestHarness;
 
-describe("POST /api/logout", () => {
-  it("204 + revoke + cookie cleared", async () => {
+  beforeAll(async () => { h = await createTestApp(); }, 180_000);
+  afterAll(async () => { await h?.close(); });
+  beforeEach(async () => {
+    await resetDb(h.pool);
+    await h.redis.flushall();
+  });
+
+  async function registerSession(): Promise<{ cookie: string; token: string }> {
+    const res = await h.app.inject({
+      method: "POST", url: "/api/register",
+      payload: { email: "a@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
+    });
+    const cookie = extractCookie(res.headers["set-cookie"])!;
+    const token = res.json().token;
+    return { cookie, token };
+  }
+
+  it("POST /api/logout returns 204, revokes session and clears cookie", async () => {
     const { cookie } = await registerSession();
     const res = await h.app.inject({
       method: "POST", url: "/api/logout",
@@ -40,12 +42,12 @@ describe("POST /api/logout", () => {
     expect(active.rows[0].c).toBe(0);
   });
 
-  it("204 without cookie (idempotent)", async () => {
+  it("POST /api/logout is idempotent without cookie", async () => {
     const res = await h.app.inject({ method: "POST", url: "/api/logout" });
     expect(res.statusCode).toBe(204);
   });
 
-  it("204 on second call (idempotent)", async () => {
+  it("POST /api/logout is idempotent on second call", async () => {
     const { cookie } = await registerSession();
     const first = await h.app.inject({
       method: "POST", url: "/api/logout",
@@ -58,12 +60,9 @@ describe("POST /api/logout", () => {
     expect(first.statusCode).toBe(204);
     expect(second.statusCode).toBe(204);
   });
-});
 
-describe("POST /api/auth/logout-all", () => {
-  it("204 with valid access JWT, revokes all sessions", async () => {
+  it("POST /api/auth/logout-all revokes all sessions with valid access JWT", async () => {
     const { token } = await registerSession();
-    // Create a second session via login
     await h.app.inject({
       method: "POST", url: "/api/login",
       payload: { email: "a@example.com", password: "secret1" },
@@ -77,7 +76,7 @@ describe("POST /api/auth/logout-all", () => {
     expect(active.rows[0].c).toBe(0);
   });
 
-  it("401 without access JWT", async () => {
+  it("POST /api/auth/logout-all returns 401 without access JWT", async () => {
     const res = await h.app.inject({ method: "POST", url: "/api/auth/logout-all" });
     expect(res.statusCode).toBe(401);
   });

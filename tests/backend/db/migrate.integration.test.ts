@@ -3,23 +3,24 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let container: StartedPostgreSqlContainer;
-let pool: Pool;
+describeWithContainers("migrations", () => {
+  let container: StartedPostgreSqlContainer;
+  let pool: Pool;
 
-beforeAll(async () => {
-  container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  pool = new Pool({ connectionString: container.getConnectionUri() });
-  const db = drizzle(pool);
-  await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
-}, 120_000);
+  beforeAll(async () => {
+    container = await new PostgreSqlContainer("postgres:16-alpine").start();
+    pool = new Pool({ connectionString: container.getConnectionUri() });
+    const db = drizzle(pool);
+    await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
+  }, 120_000);
 
-afterAll(async () => {
-  await pool?.end();
-  await container?.stop();
-});
+  afterAll(async () => {
+    await pool?.end();
+    await container?.stop();
+  });
 
-describe("migrations", () => {
   beforeEach(async () => {
     await pool.query("TRUNCATE users, sessions CASCADE");
   });

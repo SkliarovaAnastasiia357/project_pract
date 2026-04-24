@@ -13,6 +13,12 @@ const channel: BroadcastChannel | null =
     ? new (globalThis as any).BroadcastChannel(CHANNEL_NAME)
     : null;
 
+// In Node.js test runs BroadcastChannel can keep the event loop alive.
+// Browsers ignore this because `unref` is not available there.
+if (channel && "unref" in channel && typeof channel.unref === "function") {
+  channel.unref();
+}
+
 type Listener = (msg: AuthBroadcast) => void;
 const listeners = new Set<Listener>();
 

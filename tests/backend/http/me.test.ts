@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let h: TestHarness;
-beforeAll(async () => { h = await createTestApp(); }, 180_000);
-afterAll(async () => { await h?.close(); });
-beforeEach(async () => {
-  await resetDb(h.pool);
-  await h.redis.flushall();
-});
+describeWithContainers("GET /api/me", () => {
+  let h: TestHarness;
 
-describe("GET /api/me", () => {
+  beforeAll(async () => { h = await createTestApp(); }, 180_000);
+  afterAll(async () => { await h?.close(); });
+  beforeEach(async () => {
+    await resetDb(h.pool);
+    await h.redis.flushall();
+  });
+
   it("200 with valid token", async () => {
     const reg = await h.app.inject({
       method: "POST",

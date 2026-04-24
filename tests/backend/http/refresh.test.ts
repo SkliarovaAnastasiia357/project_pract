@@ -1,15 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createHash } from "node:crypto";
 import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
-
-let h: TestHarness;
-beforeAll(async () => { h = await createTestApp(); }, 180_000);
-afterAll(async () => { await h?.close(); });
-beforeEach(async () => {
-  await resetDb(h.pool);
-  // Flush Redis to avoid rate-limit state leakage from prior tests
-  await h.redis.flushall();
-});
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
 function extractCookie(setCookie: string | string[] | undefined): string | undefined {
   const s = Array.isArray(setCookie) ? setCookie.join(";") : setCookie;
@@ -17,17 +9,26 @@ function extractCookie(setCookie: string | string[] | undefined): string | undef
   return m?.[1];
 }
 
-async function registerAndGetCookie(): Promise<string> {
-  const res = await h.app.inject({
-    method: "POST", url: "/api/register",
-    payload: { email: "a@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
-  });
-  const cookie = extractCookie(res.headers["set-cookie"]);
-  if (!cookie) throw new Error("no cookie from register");
-  return cookie;
-}
+describeWithContainers("POST /api/auth/refresh", () => {
+  let h: TestHarness;
 
-describe("POST /api/auth/refresh", () => {
+  beforeAll(async () => { h = await createTestApp(); }, 180_000);
+  afterAll(async () => { await h?.close(); });
+  beforeEach(async () => {
+    await resetDb(h.pool);
+    await h.redis.flushall();
+  });
+
+  async function registerAndGetCookie(): Promise<string> {
+    const res = await h.app.inject({
+      method: "POST", url: "/api/register",
+      payload: { email: "a@example.com", name: "A", password: "secret1", confirmPassword: "secret1" },
+    });
+    const cookie = extractCookie(res.headers["set-cookie"]);
+    if (!cookie) throw new Error("no cookie from register");
+    return cookie;
+  }
+
   it("200 with valid cookie, rotates token", async () => {
     const old = await registerAndGetCookie();
     const res = await h.app.inject({
@@ -50,7 +51,6 @@ describe("POST /api/auth/refresh", () => {
     expect(res.statusCode).toBe(401);
     const setCookie = res.headers["set-cookie"];
     const asStr = Array.isArray(setCookie) ? setCookie.join(";") : setCookie;
-    // clearCookie writes tn_refresh= with Max-Age=0 (or expired Expires)
     expect(asStr).toMatch(/tn_refresh=/);
   });
 
@@ -64,18 +64,15 @@ describe("POST /api/auth/refresh", () => {
 
   it("401 + family revoke on real replay (revoked >5s ago)", async () => {
     const c1 = await registerAndGetCookie();
-    // Rotate once to establish revoked state
     await h.app.inject({
       method: "POST", url: "/api/auth/refresh",
       headers: { cookie: `tn_refresh=${c1}` },
     });
-    // Backdate the revocation 10s
     const hash = createHash("sha256").update(c1).digest("hex");
     await h.pool.query(
       `UPDATE sessions SET revoked_at = now() - interval '10 seconds' WHERE token_hash = $1`,
       [hash],
     );
-    // Replay
     const res = await h.app.inject({
       method: "POST", url: "/api/auth/refresh",
       headers: { cookie: `tn_refresh=${c1}` },

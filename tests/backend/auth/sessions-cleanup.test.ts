@@ -8,33 +8,34 @@ import {
   cleanupExpiredSessions,
   startCleanupJob,
 } from "../../../src/backend/auth/sessions-cleanup.js";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let container: StartedPostgreSqlContainer;
-let pool: Pool;
-let db: ReturnType<typeof drizzle>;
-let userId: string;
+describeWithContainers("sessions-cleanup", () => {
+  let container: StartedPostgreSqlContainer;
+  let pool: Pool;
+  let db: ReturnType<typeof drizzle>;
+  let userId: string;
 
-beforeAll(async () => {
-  container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  pool = new Pool({ connectionString: container.getConnectionUri() });
-  db = drizzle(pool, { schema: { users, sessions } });
-  await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
-}, 120_000);
+  beforeAll(async () => {
+    container = await new PostgreSqlContainer("postgres:16-alpine").start();
+    pool = new Pool({ connectionString: container.getConnectionUri() });
+    db = drizzle(pool, { schema: { users, sessions } });
+    await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
+  }, 120_000);
 
-afterAll(async () => {
-  await pool?.end();
-  await container?.stop();
-});
+  afterAll(async () => {
+    await pool?.end();
+    await container?.stop();
+  });
 
-beforeEach(async () => {
-  await pool.query("TRUNCATE users, sessions CASCADE");
-  const res = await pool.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('a@b.c', 'A', 'h') RETURNING id`,
-  );
-  userId = res.rows[0].id;
-});
+  beforeEach(async () => {
+    await pool.query("TRUNCATE users, sessions CASCADE");
+    const res = await pool.query(
+      `INSERT INTO users (email, name, password_hash) VALUES ('a@b.c', 'A', 'h') RETURNING id`,
+    );
+    userId = res.rows[0].id;
+  });
 
-describe("sessions-cleanup", () => {
   it("deletes long-expired and long-revoked rows, keeps recent", async () => {
     await pool.query(
       `INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1, 'a', now() - interval '40 days')`,
@@ -98,7 +99,6 @@ describe("sessions-cleanup", () => {
     stop();
     const countAfterStop = logs.length;
     await new Promise((r) => setTimeout(r, 250));
-    // Expect no additional ticks after stop
     expect(logs.length).toBe(countAfterStop);
   });
 });

@@ -8,33 +8,34 @@ import {
   createSession, rotateSession, revokeByRawToken, revokeAllForUser,
   RefreshInvalid, RefreshReuseDetected, sha256,
 } from "../../../src/backend/auth/sessions.js";
+import { describeWithContainers } from "../helpers/containerRuntime.js";
 
-let container: StartedPostgreSqlContainer;
-let pool: Pool;
-let db: ReturnType<typeof drizzle>;
-let userId: string;
+describeWithContainers("sessions", () => {
+  let container: StartedPostgreSqlContainer;
+  let pool: Pool;
+  let db: ReturnType<typeof drizzle>;
+  let userId: string;
 
-beforeAll(async () => {
-  container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  pool = new Pool({ connectionString: container.getConnectionUri() });
-  db = drizzle(pool, { schema: { users, sessions } });
-  await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
-}, 120_000);
+  beforeAll(async () => {
+    container = await new PostgreSqlContainer("postgres:16-alpine").start();
+    pool = new Pool({ connectionString: container.getConnectionUri() });
+    db = drizzle(pool, { schema: { users, sessions } });
+    await migrate(db, { migrationsFolder: "./src/backend/db/migrations" });
+  }, 120_000);
 
-afterAll(async () => {
-  await pool?.end();
-  await container?.stop();
-});
+  afterAll(async () => {
+    await pool?.end();
+    await container?.stop();
+  });
 
-beforeEach(async () => {
-  await pool.query("TRUNCATE users, sessions CASCADE");
-  const res = await pool.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('a@b.c', 'A', 'h') RETURNING id`,
-  );
-  userId = res.rows[0].id;
-});
+  beforeEach(async () => {
+    await pool.query("TRUNCATE users, sessions CASCADE");
+    const res = await pool.query(
+      `INSERT INTO users (email, name, password_hash) VALUES ('a@b.c', 'A', 'h') RETURNING id`,
+    );
+    userId = res.rows[0].id;
+  });
 
-describe("sessions", () => {
   it("createSession inserts hashed token, returns raw", async () => {
     const { rawToken, sessionId } = await createSession(db as any, userId, { ttlSec: 60 });
     expect(rawToken).toMatch(/^[A-Za-z0-9_-]+$/);
@@ -67,7 +68,6 @@ describe("sessions", () => {
   it("rotateSession on replayed revoked token (>grace) triggers family revoke", async () => {
     const { rawToken: t1 } = await createSession(db as any, userId, { ttlSec: 60 });
     await rotateSession(db as any, t1, { ttlSec: 60 });
-    // Backdate the revocation >5s ago so it falls outside the grace window
     await pool.query(
       `UPDATE sessions SET revoked_at = now() - interval '10 seconds' WHERE token_hash = $1`,
       [sha256(t1)],
@@ -83,7 +83,6 @@ describe("sessions", () => {
   it("rotateSession on recently-revoked token (<grace) throws RefreshInvalid WITHOUT family revoke", async () => {
     const { rawToken: t1 } = await createSession(db as any, userId, { ttlSec: 60 });
     await rotateSession(db as any, t1, { ttlSec: 60 });
-    // Revocation is fresh (<5s ago), replaced_by_id is set by rotateSession
     await expect(rotateSession(db as any, t1, { ttlSec: 60 })).rejects.toBeInstanceOf(RefreshInvalid);
     const active = await pool.query(
       `SELECT COUNT(*)::int AS c FROM sessions WHERE user_id=$1 AND revoked_at IS NULL`,
