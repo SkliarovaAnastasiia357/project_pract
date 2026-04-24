@@ -40,6 +40,7 @@ export async function createTestApp(): Promise<TestHarness> {
     LOG_LEVEL: "silent",
     ACCESS_TTL_SEC: 900,
     REFRESH_TTL_SEC: 2_592_000,
+    CORS_ORIGIN: ["http://localhost:5173"],
   } as any;
 
   const app = await buildApp({ env, db: db as any, redis });

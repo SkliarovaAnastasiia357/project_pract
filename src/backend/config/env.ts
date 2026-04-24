@@ -10,6 +10,10 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   ACCESS_TTL_SEC: z.coerce.number().int().positive().default(900),
   REFRESH_TTL_SEC: z.coerce.number().int().positive().default(60 * 60 * 24 * 30),
+  CORS_ORIGIN: z
+    .string()
+    .default("http://localhost:5173")
+    .transform((s) => s.split(",").map((o) => o.trim()).filter(Boolean)),
 });
 
 export type Env = z.infer<typeof envSchema>;

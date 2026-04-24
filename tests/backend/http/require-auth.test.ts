@@ -6,7 +6,7 @@ import { issueAccessToken } from "../../../src/backend/auth/tokens.js";
 const SECRET = "x".repeat(48);
 
 function fakeEnv(): any {
-  return { LOG_LEVEL: "silent", AUTH_ACCESS_SECRET: SECRET } as any;
+  return { LOG_LEVEL: "silent", AUTH_ACCESS_SECRET: SECRET, CORS_ORIGIN: ["http://localhost:5173"] } as any;
 }
 
 async function appWithProtected() {

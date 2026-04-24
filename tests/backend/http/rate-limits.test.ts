@@ -24,7 +24,7 @@ beforeEach(async () => {
 
 describe("rate limits", () => {
   it("registerLimit blocks 6th request from same IP with 429 and retryAfter", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/r", { preHandler: limits.registerLimit }, async () => ({ ok: true }));
 
@@ -43,7 +43,7 @@ describe("rate limits", () => {
   });
 
   it("registerLimit allows 5th request from same IP (boundary)", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/r2", { preHandler: limits.registerLimit }, async () => ({ ok: true }));
 
@@ -56,7 +56,7 @@ describe("rate limits", () => {
   });
 
   it("loginEmailLimit blocks 6th request to same email from different IPs", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/l", { preHandler: [limits.loginIpLimit, limits.loginEmailLimit] }, async () => ({ ok: true }));
 
@@ -84,7 +84,7 @@ describe("rate limits", () => {
   });
 
   it("loginEmailLimit treats different emails as independent counters", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/l2", { preHandler: [limits.loginIpLimit, limits.loginEmailLimit] }, async () => ({ ok: true }));
 
@@ -111,7 +111,7 @@ describe("rate limits", () => {
   });
 
   it("refreshLimit blocks 61st request from same IP", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/ref", { preHandler: limits.refreshLimit }, async () => ({ ok: true }));
 
@@ -127,7 +127,7 @@ describe("rate limits", () => {
   });
 
   it("rate limits are independent per IP (different IPs don't share counter)", async () => {
-    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any, db: {} as any, redis });
+    const app = await buildApp({ env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any, db: {} as any, redis });
     const limits = await registerAuthRateLimits(app);
     app.post("/r3", { preHandler: limits.registerLimit }, async () => ({ ok: true }));
 

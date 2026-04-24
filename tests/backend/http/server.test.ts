@@ -5,7 +5,7 @@ import { ApiError } from "../../../src/backend/http/errors.js";
 
 function fakeDeps(): any {
   return {
-    env: { NODE_ENV: "test", LOG_LEVEL: "silent" } as any,
+    env: { NODE_ENV: "test", LOG_LEVEL: "silent", CORS_ORIGIN: ["http://localhost:5173"] } as any,
     db: {} as any,
     redis: {} as any,
   };
