@@ -40,11 +40,19 @@ services:
       DATABASE_URL: postgres://teamnova:${POSTGRES_PASSWORD}@postgres:5432/teamnova
       REDIS_URL: redis://redis:6379
       AUTH_ACCESS_SECRET: ${AUTH_ACCESS_SECRET:?required}
-      COOKIE_SECURE: "true"
+      COOKIE_SECURE: "false"
       LOG_LEVEL: info
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://teamnova.tw1.su}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:80"
 
 volumes:
   pgdata:
