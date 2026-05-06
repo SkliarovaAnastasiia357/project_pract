@@ -108,6 +108,18 @@
 - `.github/workflows/tests.yml` — запуск тестов в GitHub Actions
 - `.githooks/pre-commit` — проверка тестов перед коммитом
 
+## Структура файла документации
+/docs
+├── README.md                      # Главный файл
+├── api/
+│   ├── openapi.yaml               # Swagger-спецификация
+├── database/
+│   └── schema.png                 # ER-диаграмма
+├── testing/
+│   ├── test-cases.md              # Чек-лист use case
+└── presentation/
+    └── slides.pptx                # Финальная презентация 
+ + временные файлы
 ---
 
 ## Установка и запуск
