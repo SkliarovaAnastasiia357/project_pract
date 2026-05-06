@@ -101,7 +101,6 @@
 
 ## Структура проекта
 
-- `UserStories/` — описание проекта и PDF с user stories
 - `tests/frontend/` — frontend-тесты
 - `tests/backend/` — backend-тесты на Vitest + testcontainers
 - `docs/MODULE_PROGRESS.md` — файл для отметки выполнения модулей
