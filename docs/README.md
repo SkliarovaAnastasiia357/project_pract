@@ -111,6 +111,7 @@
 ```
 /docs
 ├── README.md                      # Главный файл
+├── US&UC/                         # User Stories и Use Case
 ├── api/
 │   ├── openapi.yaml               # Swagger-спецификация
 ├── database/
