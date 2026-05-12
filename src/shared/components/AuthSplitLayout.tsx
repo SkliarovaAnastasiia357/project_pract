@@ -31,7 +31,7 @@ export function AuthSplitLayout({
   return (
     <main className="auth-shell">
       <section className="auth-shell__story">
-        <BrandMark caption="workspace for builders" />
+        <BrandMark caption="пространство команды" />
         <div className="auth-shell__copy">
           <p className="auth-shell__eyebrow">{eyebrow}</p>
           <h1>{title}</h1>

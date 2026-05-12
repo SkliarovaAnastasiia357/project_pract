@@ -1,13 +1,20 @@
 import type {
   AuthSession,
+  ApplicationDecisionInput,
+  ApplicationInput,
+  IncomingApplication,
   LoginInput,
   Profile,
   ProfileInput,
   Project,
+  ProjectApplication,
   ProjectInput,
+  ProjectSearchResult,
   RegisterInput,
+  SearchInput,
   SkillInput,
   User,
+  UserSearchResult,
 } from "../types.ts";
 import { ApiClientError, type ApiClient } from "./contracts.ts";
 import { getAccessToken, refreshSession, setSession, UnauthorizedError } from "./authClient.ts";
@@ -129,5 +136,31 @@ export const httpApi: ApiClient = {
 
   deleteProject(_token: string, id: string): Promise<void> {
     return request<void>(`/api/projects/${id}`, "DELETE");
+  },
+
+  searchProjects(_token: string, input: SearchInput): Promise<ProjectSearchResult[]> {
+    const params = new URLSearchParams({ q: input.query });
+    return request<ProjectSearchResult[]>(`/api/search/projects?${params.toString()}`, "GET");
+  },
+
+  searchUsers(_token: string, input: SearchInput): Promise<UserSearchResult[]> {
+    const params = new URLSearchParams({ q: input.query });
+    return request<UserSearchResult[]>(`/api/search/users?${params.toString()}`, "GET");
+  },
+
+  applyToProject(_token: string, projectId: string, input: ApplicationInput): Promise<ProjectApplication> {
+    return request<ProjectApplication>(`/api/projects/${projectId}/applications`, "POST", input);
+  },
+
+  listIncomingApplications(_token: string): Promise<IncomingApplication[]> {
+    return request<IncomingApplication[]>("/api/applications/incoming", "GET");
+  },
+
+  decideApplication(
+    _token: string,
+    applicationId: string,
+    input: ApplicationDecisionInput,
+  ): Promise<ProjectApplication> {
+    return request<ProjectApplication>(`/api/applications/${applicationId}`, "PATCH", input);
   },
 };

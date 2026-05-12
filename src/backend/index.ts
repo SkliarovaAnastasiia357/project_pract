@@ -8,6 +8,9 @@ import { buildApp } from "./http/server.js";
 import { registerAuthRoutes } from "./http/routes/auth.js";
 import { registerMeRoute } from "./http/routes/me.js";
 import { registerHealthRoutes } from "./http/routes/health.js";
+import { registerProfileRoutes } from "./http/routes/profile.js";
+import { registerProjectRoutes } from "./http/routes/projects.js";
+import { registerApplicationRoutes } from "./http/routes/applications.js";
 import { startCleanupJob } from "./auth/sessions-cleanup.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -27,6 +30,9 @@ async function main(): Promise<void> {
   await registerHealthRoutes(app);
   await registerAuthRoutes(app);
   await registerMeRoute(app);
+  await registerProfileRoutes(app);
+  await registerProjectRoutes(app);
+  await registerApplicationRoutes(app);
 
   const stopCleanup = startCleanupJob({
     db: dbHandle.db,

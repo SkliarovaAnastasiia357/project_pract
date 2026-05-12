@@ -36,7 +36,7 @@ describeWithContainers("rate limits", () => {
     const blocked = await app.inject({ method: "POST", url: "/r", remoteAddress: "1.2.3.4" });
     expect(blocked.statusCode).toBe(429);
     const body = blocked.json();
-    expect(body.message).toMatch(/РЎР»РёС€РєРѕРј/);
+    expect(body.message).toMatch(/Слишком/);
     expect(body.retryAfter).toBeDefined();
 
     await app.close();
@@ -77,7 +77,7 @@ describeWithContainers("rate limits", () => {
       payload: { email: "victim@example.com" },
     });
     expect(blocked.statusCode).toBe(429);
-    expect(blocked.json().message).toMatch(/РЎР»РёС€РєРѕРј/);
+    expect(blocked.json().message).toMatch(/Слишком/);
 
     await app.close();
   });

@@ -5,7 +5,7 @@ import { routePaths } from "../../src/app/routePaths.ts";
 export async function runAppRoutesTests(): Promise<void> {
   assert.deepEqual(
     routePaths,
-    ["/", "/login", "/register", "/home", "/profile", "/projects/new", "/projects/:id/edit"],
-    "роутер должен содержать все пути для спринтов 2 и 3",
+    ["/", "/login", "/register", "/home", "/profile", "/search", "/requests", "/projects/new", "/projects/:id/edit"],
+    "роутер должен содержать все пути MVP",
   );
 }

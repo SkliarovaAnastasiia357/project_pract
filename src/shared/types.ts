@@ -31,6 +31,43 @@ export type Project = {
   updatedAt: string;
 };
 
+export type ApplicationStatus = "pending" | "accepted" | "rejected";
+
+export type ProjectSearchResult = Project & {
+  ownerId: string;
+  ownerName: string;
+  applicationStatus: ApplicationStatus | null;
+};
+
+export type UserSearchResult = User & {
+  skills: Skill[];
+};
+
+export type ProjectApplication = {
+  id: string;
+  projectId: string;
+  applicantId: string;
+  message: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type IncomingApplication = {
+  id: string;
+  message: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+  project: {
+    id: string;
+    title: string;
+  };
+  applicant: User & {
+    skills: Skill[];
+  };
+};
+
 export type RegisterInput = {
   email: string;
   name: string;
@@ -56,6 +93,18 @@ export type ProjectInput = {
   description: string;
   stack: string;
   roles: string;
+};
+
+export type SearchInput = {
+  query: string;
+};
+
+export type ApplicationInput = {
+  message: string;
+};
+
+export type ApplicationDecisionInput = {
+  status: Extract<ApplicationStatus, "accepted" | "rejected">;
 };
 
 export type NavigationItem = {

@@ -35,7 +35,7 @@ describeWithContainers("POST /api/login", () => {
       payload: { email: "alice@example.com", password: "wrong" },
     });
     expect(res.statusCode).toBe(401);
-    expect(res.json().message).toBe("РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ");
+    expect(res.json().message).toBe("Неверный email или пароль");
   });
 
   it("401 with nonexistent email, SAME message", async () => {
@@ -45,7 +45,7 @@ describeWithContainers("POST /api/login", () => {
       payload: { email: "nobody@example.com", password: "anything" },
     });
     expect(res.statusCode).toBe(401);
-    expect(res.json().message).toBe("РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ");
+    expect(res.json().message).toBe("Неверный email или пароль");
   });
 
   it("timing: nonexistent user comparable to wrong password", async () => {

@@ -6,6 +6,8 @@ import { HomePage } from "../pages/HomePage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { ProfilePage } from "../pages/ProfilePage.tsx";
 import { ProjectEditorPage } from "../pages/ProjectEditorPage.tsx";
+import { RequestsPage } from "../pages/RequestsPage.tsx";
+import { SearchPage } from "../pages/SearchPage.tsx";
 import { RegisterPage } from "../pages/RegisterPage.tsx";
 import { ProtectedRoute } from "./ProtectedRoute.tsx";
 import { useAuth } from "./providers/AuthProvider.tsx";
@@ -28,7 +30,7 @@ function NotFoundPage() {
   return (
     <main className="centered-state">
       <div className="not-found-card">
-        <BrandMark caption="route not found" />
+        <BrandMark caption="страница не найдена" />
         <h1>Страница не найдена</h1>
         <p>Проверьте адрес или вернитесь в рабочую зону через навигацию приложения.</p>
       </div>
@@ -62,6 +64,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ProfilePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/search",
+    element: (
+      <ProtectedRoute>
+        <SearchPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/requests",
+    element: (
+      <ProtectedRoute>
+        <RequestsPage />
       </ProtectedRoute>
     ),
   },

@@ -9,6 +9,9 @@ import { buildApp } from "../../../../src/backend/http/server.js";
 import { registerAuthRoutes } from "../../../../src/backend/http/routes/auth.js";
 import { registerMeRoute } from "../../../../src/backend/http/routes/me.js";
 import { registerHealthRoutes } from "../../../../src/backend/http/routes/health.js";
+import { registerProfileRoutes } from "../../../../src/backend/http/routes/profile.js";
+import { registerProjectRoutes } from "../../../../src/backend/http/routes/projects.js";
+import { registerApplicationRoutes } from "../../../../src/backend/http/routes/applications.js";
 import * as schema from "../../../../src/backend/db/schema.js";
 
 const SECRET = "x".repeat(48);
@@ -47,6 +50,9 @@ export async function createTestApp(): Promise<TestHarness> {
   await registerHealthRoutes(app);
   await registerAuthRoutes(app);
   await registerMeRoute(app);
+  await registerProfileRoutes(app);
+  await registerProjectRoutes(app);
+  await registerApplicationRoutes(app);
   return {
     app,
     pool,
@@ -62,5 +68,5 @@ export async function createTestApp(): Promise<TestHarness> {
 }
 
 export async function resetDb(pool: Pool): Promise<void> {
-  await pool.query("TRUNCATE users, sessions CASCADE");
+  await pool.query("TRUNCATE users, sessions, skills CASCADE");
 }
