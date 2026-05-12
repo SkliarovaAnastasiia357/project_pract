@@ -76,7 +76,7 @@ export function LoginPage() {
 
   return (
     <AuthSplitLayout
-      eyebrow="Sprint 2 / authentication core"
+      eyebrow="Спринт 2 · авторизация"
       title="Войдите в рабочую среду Teamnova"
       description="Используйте аккаунт, чтобы открыть профиль, навыки и проекты. Состояние сессии сохраняется локально и сразу защищает маршруты приложения."
       helperLabel="Создать аккаунт"
@@ -98,7 +98,7 @@ export function LoginPage() {
             className="text-input"
             name="email"
             onChange={(event) => updateField("email", event.target.value)}
-            placeholder="you@teamnova.app"
+            placeholder="student@example.com"
             type="email"
             value={form.email}
           />

@@ -37,14 +37,15 @@
 1. Ядро идентификации: Регистрация/логин, профиль (Имя + Описание + Список навыков чекбоксами/тегами);
 2. Ядро проектов: CRUD страниц проекта (Название, Идея, Технологический стек, Роли для найма);
 3. Ядро поиска: Единая поисковая строка, фильтрация по ключевым словам (в описании) и по навыкам (строгое совпадение);
-4. Хостинг: Публичная ссылка, доступная с любого браузера.
+4. Заявки: участник откликается на проект, владелец просматривает входящие заявки и принимает/отклоняет их;
+5. Хостинг: Публичная ссылка, доступная с любого браузера.
  
 <p align="center">
   <a href="https://teamnova.tw1.su">TEAMNOVA</a>
 </p>
 
 <p align="center">
-  <img src="./docs/site-qr.svg" alt="QR-код сайта" width="180" />
+  <img src="./site-qr.svg" alt="QR-код сайта" width="180" />
 </p>
 
 Портреты аудитории
@@ -106,6 +107,8 @@
 - `docs/MODULE_PROGRESS.md` — файл для отметки выполнения модулей
 - `.github/workflows/tests.yml` — запуск тестов в GitHub Actions
 - `.githooks/pre-commit` — проверка тестов перед коммитом
+- `src/backend/http/routes/` — REST-маршруты auth/profile/projects/search/applications
+- `src/shared/api/` — общий клиентский контракт для mock и HTTP API
 
 ## Структура файла документации
 ```
@@ -117,9 +120,10 @@
 ├── database/
 │   └── schema.png                 # ER-диаграмма
 ├── testing/
-│   ├── test-cases.md              # Чек-лист use case
-└── presentation/
-    └── slides.pptx                # Финальная презентация 
+│   ├── test-cases.md              # Описание автотестов
+│   ├── SPRINT3_TEST_CHECKLIST.md  # Чек-лист профилей и проектов
+│   └── SPRINT4_TEST_CHECKLIST.md  # Чек-лист поиска и заявок
+└── presentation/                  # Финальная презентация добавляется перед защитой
     
  + временные файлы
 ```
@@ -168,13 +172,19 @@ cp .env.example .env
 npm run setup:hooks
 ```
 
-4. Запустить бекенд в dev-режиме:
+4. Запустить frontend в mock-режиме:
+
+```bash
+VITE_API_MODE=mock npm run dev
+```
+
+5. Запустить backend в dev-режиме:
 
 ```bash
 npm run dev:backend
 ```
 
-5. Запустить тесты:
+6. Запустить тесты:
 
 ```bash
 npm run test:frontend
@@ -207,5 +217,22 @@ npm test
 - CORS same-origin за Nginx, HttpOnly + Secure + SameSite=Strict refresh cookie
 - Cross-tab синхронизация через BroadcastChannel, single-flight /refresh на фронте
 
-Подробности: [docs/superpowers/specs/2026-04-24-sprint2-auth-ts-design.md](docs/superpowers/specs/2026-04-24-sprint2-auth-ts-design.md)  
-OpenAPI-спецификация: [docs/api-spec.yaml](docs/api-spec.yaml)
+OpenAPI-спецификация: [docs/api/openapi.yaml](api/openapi.yaml)
+
+---
+
+## Спринт 4 — Поиск и заявки
+
+Реализовано:
+- Поиск проектов по названию, описанию, стеку и ролям: `GET /api/search/projects?q=React`
+- Поиск пользователей по навыкам, имени и описанию профиля: `GET /api/search/users?q=React`
+- Заявки на участие: `POST /api/projects/:projectId/applications`
+- Входящие заявки владельца проекта: `GET /api/applications/incoming`
+- Принятие и отклонение заявок: `PATCH /api/applications/:applicationId`
+- UI-страницы `/search` и `/requests` для демонстрации полного MVP-цикла.
+
+Демо-сценарий Показа 4:
+1. Пользователь A регистрируется и создает проект со стеком `React, TypeScript`.
+2. Пользователь B регистрируется, заполняет профиль и добавляет навык `React`.
+3. Пользователь B находит проект через `/search` и отправляет заявку.
+4. Пользователь A открывает `/requests` и принимает или отклоняет заявку.

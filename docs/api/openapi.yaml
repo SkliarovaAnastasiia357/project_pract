@@ -1,14 +1,14 @@
 openapi: 3.0.3
 info:
   title: Teamnova API
-  version: 0.2.0
+  version: 0.4.0
   description: |
-    Sprint 2 — Authentication endpoints.
-    Access JWT (HS256, 15min) returned in body; refresh token (opaque, 30d) in
-    HttpOnly+Secure+SameSite=Strict cookie `tn_refresh` on path `/api`.
+    MVP API: authentication, profile skills, projects, search and project applications.
+    Access JWT is returned in the response body; refresh token is stored in the
+    HttpOnly cookie `tn_refresh` on path `/api`.
 servers:
   - url: /
-    description: Same-origin (served via Nginx reverse proxy on production VDS)
+    description: Same-origin via Nginx reverse proxy
 paths:
   /api/register:
     post:
@@ -18,21 +18,10 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [email, name, password, confirmPassword]
-              properties:
-                email: { type: string, format: email, maxLength: 254 }
-                name:  { type: string, minLength: 1, maxLength: 80 }
-                password: { type: string, minLength: 6, maxLength: 128 }
-                confirmPassword: { type: string }
+            schema: { $ref: "#/components/schemas/RegisterInput" }
       responses:
         "201":
           description: Registered
-          headers:
-            Set-Cookie:
-              schema: { type: string }
-              description: "tn_refresh=<opaque>; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age=2592000"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
@@ -47,17 +36,10 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [email, password]
-              properties:
-                email: { type: string }
-                password: { type: string }
+            schema: { $ref: "#/components/schemas/LoginInput" }
       responses:
         "200":
           description: OK
-          headers:
-            Set-Cookie: { schema: { type: string } }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
@@ -66,38 +48,27 @@ paths:
         "429": { $ref: "#/components/responses/RateLimited" }
   /api/auth/refresh:
     post:
-      summary: Rotate refresh token, issue new access JWT
+      summary: Rotate refresh token and issue access JWT
       tags: [auth]
-      description: |
-        Reads `tn_refresh` cookie; rotates the session (old revoked with
-        replaced_by_id, new issued). On replay of a revoked token beyond the
-        5-second grace window, revokes all user sessions (reuse detection).
       responses:
         "200":
           description: OK
-          headers:
-            Set-Cookie: { schema: { type: string } }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
-        "401":
-          description: Invalid or reused refresh token; cookie cleared
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
   /api/logout:
     post:
-      summary: Revoke current session, clear cookie (idempotent)
+      summary: Revoke current session
       tags: [auth]
       responses:
         "204": { description: No Content }
   /api/auth/logout-all:
     post:
-      summary: Revoke all active sessions for the current user
+      summary: Revoke all sessions for current user
       tags: [auth]
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
       responses:
         "204": { description: No Content }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -105,8 +76,7 @@ paths:
     get:
       summary: Current user
       tags: [auth]
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: OK
@@ -114,43 +84,258 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-  /healthz:
+  /api/profile:
     get:
-      summary: Liveness probe (no DB/Redis check)
-      tags: [ops]
+      summary: Current user profile
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      summary: Update profile bio
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bio: { type: string, maxLength: 400 }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/profile/skills:
+    post:
+      summary: Add skill to current profile
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { $ref: "#/components/responses/ValidationError" }
+  /api/profile/skills/{skillId}:
+    delete:
+      summary: Remove skill from current profile
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: skillId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/projects:
+    get:
+      summary: List current user's projects
+      tags: [projects]
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
+                type: array
+                items: { $ref: "#/components/schemas/Project" }
+    post:
+      summary: Create project
+      tags: [projects]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /api/projects/{projectId}:
+    get:
+      summary: Get own project
+      tags: [projects]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      summary: Update own project
+      tags: [projects]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      summary: Delete own project
+      tags: [projects]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: No Content }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/search/projects:
+    get:
+      summary: Search projects by keyword or stack tag
+      tags: [search]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: q, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProjectSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/search/users:
+    get:
+      summary: Search users by skills and profile keywords
+      tags: [search]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: q, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/projects/{projectId}/applications:
+    post:
+      summary: Apply to project
+      tags: [applications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, maxLength: 400 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectApplication" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ValidationError" }
+  /api/applications/incoming:
+    get:
+      summary: List applications for projects owned by current user
+      tags: [applications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IncomingApplication" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/applications/{applicationId}:
+    patch:
+      summary: Accept or reject incoming application
+      tags: [applications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: applicationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [accepted, rejected] }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectApplication" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /healthz:
+    get:
+      summary: Liveness probe
+      tags: [ops]
+      responses:
+        "200":
+          description: OK
   /readyz:
     get:
-      summary: Readiness probe (pings DB + Redis)
+      summary: Readiness probe
       tags: [ops]
       responses:
         "200":
           description: Ready
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  db: { type: string }
-                  redis: { type: string }
         "503":
           description: Unavailable
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  err: { type: string }
 components:
   securitySchemes:
     bearerAuth:
@@ -158,37 +343,140 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    RegisterInput:
+      type: object
+      required: [email, name, password, confirmPassword]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        password: { type: string, minLength: 6, maxLength: 128 }
+        confirmPassword: { type: string }
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
     User:
       type: object
       required: [id, email, name, bio]
       properties:
-        id:    { type: string, format: uuid }
+        id: { type: string, format: uuid }
         email: { type: string, format: email }
-        name:  { type: string }
-        bio:   { type: string }
+        name: { type: string }
+        bio: { type: string }
+    Skill:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    Profile:
+      type: object
+      required: [bio, skills]
+      properties:
+        bio: { type: string }
+        skills:
+          type: array
+          items: { $ref: "#/components/schemas/Skill" }
     AuthSession:
       type: object
       required: [token, user]
       properties:
-        token: { type: string, description: "HS256 access JWT, 15 minutes" }
-        user:  { $ref: "#/components/schemas/User" }
+        token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+    ProjectInput:
+      type: object
+      required: [title, description, stack, roles]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 80 }
+        description: { type: string, minLength: 1, maxLength: 500 }
+        stack: { type: string, maxLength: 160 }
+        roles: { type: string, maxLength: 160 }
+    Project:
+      allOf:
+        - $ref: "#/components/schemas/ProjectInput"
+        - type: object
+          required: [id, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            updatedAt: { type: string, format: date-time }
+    ProjectSearchResult:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          required: [ownerId, ownerName, applicationStatus]
+          properties:
+            ownerId: { type: string, format: uuid }
+            ownerName: { type: string }
+            applicationStatus:
+              nullable: true
+              type: string
+              enum: [pending, accepted, rejected]
+    UserSearchResult:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          required: [skills]
+          properties:
+            skills:
+              type: array
+              items: { $ref: "#/components/schemas/Skill" }
+    ProjectApplication:
+      type: object
+      required: [id, projectId, applicantId, message, status, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        applicantId: { type: string, format: uuid }
+        message: { type: string }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    IncomingApplication:
+      allOf:
+        - $ref: "#/components/schemas/ProjectApplication"
+        - type: object
+          required: [project, applicant]
+          properties:
+            project:
+              type: object
+              required: [id, title]
+              properties:
+                id: { type: string, format: uuid }
+                title: { type: string }
+            applicant: { $ref: "#/components/schemas/UserSearchResult" }
     Error:
       type: object
       required: [message]
       properties:
-        message:     { type: string }
+        message: { type: string }
         fieldErrors: { type: object, additionalProperties: { type: string } }
   responses:
     ValidationError:
       description: Validation or conflict failure
-      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
-    Unauthorized:
-      description: Unauthorized
-      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
-    RateLimited:
-      description: Too Many Requests
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Too Many Requests
       headers:
         Retry-After: { schema: { type: integer } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

@@ -3,14 +3,22 @@ import { validateProjectInput } from "../../features/projects/project-form.ts";
 import { clearKey, readJson, writeJson } from "../storage.ts";
 import type {
   AuthSession,
+  ApplicationDecisionInput,
+  ApplicationInput,
+  ApplicationStatus,
+  IncomingApplication,
   Profile,
   ProfileInput,
   Project,
+  ProjectApplication,
   ProjectInput,
+  ProjectSearchResult,
   RegisterInput,
+  SearchInput,
   Skill,
   SkillInput,
   User,
+  UserSearchResult,
 } from "../types.ts";
 import { ApiClientError, MOCK_DB_KEY, type ApiClient } from "./contracts.ts";
 
@@ -24,6 +32,8 @@ type ProjectRecord = Project & {
   userId: string;
 };
 
+type ApplicationRecord = ProjectApplication;
+
 type SessionRecord = {
   token: string;
   userId: string;
@@ -32,12 +42,14 @@ type SessionRecord = {
 type MockDatabase = {
   users: UserRecord[];
   projects: ProjectRecord[];
+  applications: ApplicationRecord[];
   sessions: SessionRecord[];
 };
 
 const initialDatabase: MockDatabase = {
   users: [],
   projects: [],
+  applications: [],
   sessions: [],
 };
 
@@ -46,7 +58,14 @@ function cloneDatabase(database: MockDatabase): MockDatabase {
 }
 
 function readDatabase(): MockDatabase {
-  return cloneDatabase(readJson(MOCK_DB_KEY, initialDatabase));
+  const storedDatabase = readJson(MOCK_DB_KEY, initialDatabase) as Partial<MockDatabase>;
+
+  return cloneDatabase({
+    users: storedDatabase.users ?? [],
+    projects: storedDatabase.projects ?? [],
+    applications: storedDatabase.applications ?? [],
+    sessions: storedDatabase.sessions ?? [],
+  });
 }
 
 function writeDatabase(database: MockDatabase): void {
@@ -130,6 +149,75 @@ function findProject(database: MockDatabase, userId: string, projectId: string):
   }
 
   return project;
+}
+
+function findProjectById(database: MockDatabase, projectId: string): ProjectRecord {
+  const project = database.projects.find((entry) => entry.id === projectId);
+
+  if (!project) {
+    throw new ApiClientError("Проект не найден", 404);
+  }
+
+  return project;
+}
+
+function matchesQuery(values: string[], input: SearchInput): boolean {
+  const query = input.query.trim().toLowerCase();
+
+  if (!query) {
+    return true;
+  }
+
+  return values.some((value) => value.toLowerCase().includes(query));
+}
+
+function toProjectSearchResult(database: MockDatabase, project: ProjectRecord, userId: string): ProjectSearchResult {
+  const owner = database.users.find((entry) => entry.id === project.userId);
+  const application = database.applications.find((entry) => entry.projectId === project.id && entry.applicantId === userId);
+
+  return {
+    id: project.id,
+    title: project.title,
+    description: project.description,
+    stack: project.stack,
+    roles: project.roles,
+    updatedAt: project.updatedAt,
+    ownerId: project.userId,
+    ownerName: owner?.name ?? "Пользователь",
+    applicationStatus: application?.status ?? null,
+  };
+}
+
+function toUserSearchResult(user: UserRecord): UserSearchResult {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    bio: user.bio,
+    skills: [...user.skills].sort((left, right) => left.name.localeCompare(right.name, "ru")),
+  };
+}
+
+function toIncomingApplication(database: MockDatabase, application: ApplicationRecord): IncomingApplication {
+  const project = findProjectById(database, application.projectId);
+  const applicant = database.users.find((entry) => entry.id === application.applicantId);
+
+  if (!applicant) {
+    throw new ApiClientError("Пользователь не найден", 404);
+  }
+
+  return {
+    id: application.id,
+    message: application.message,
+    status: application.status,
+    createdAt: application.createdAt,
+    updatedAt: application.updatedAt,
+    project: {
+      id: project.id,
+      title: project.title,
+    },
+    applicant: toUserSearchResult(applicant),
+  };
 }
 
 export function resetMockApiState(): void {
@@ -330,6 +418,102 @@ export const mockApi: ApiClient = {
     const { database, user } = requireUserByToken(token);
     findProject(database, user.id, projectId);
     database.projects = database.projects.filter((project) => !(project.userId === user.id && project.id === projectId));
+    database.applications = database.applications.filter((application) => application.projectId !== projectId);
     writeDatabase(database);
+  },
+
+  async searchProjects(token, input) {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+
+    return database.projects
+      .filter((project) =>
+        matchesQuery([project.title, project.description, project.stack, project.roles], input),
+      )
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .map((project) => toProjectSearchResult(database, project, user.id));
+  },
+
+  async searchUsers(token, input) {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+
+    return database.users
+      .filter((entry) => entry.id !== user.id)
+      .filter((entry) =>
+        matchesQuery([entry.name, entry.bio, ...entry.skills.map((skill) => skill.name)], input),
+      )
+      .map(toUserSearchResult);
+  },
+
+  async applyToProject(token, projectId, input: ApplicationInput) {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    const project = findProjectById(database, projectId);
+    const message = input.message.trim();
+
+    if (project.userId === user.id) {
+      throw new ApiClientError("Нельзя отправить заявку в собственный проект", 400);
+    }
+
+    if (message.length > 400) {
+      throw new ApiClientError("Исправьте ошибки в заявке", 400, {
+        message: "Сообщение не должно превышать 400 символов",
+      });
+    }
+
+    if (database.applications.some((application) => application.projectId === projectId && application.applicantId === user.id)) {
+      throw new ApiClientError("Заявка уже отправлена", 409);
+    }
+
+    const now = new Date().toISOString();
+    const application: ApplicationRecord = {
+      id: createId("application"),
+      projectId,
+      applicantId: user.id,
+      message,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    database.applications.push(application);
+    writeDatabase(database);
+
+    return { ...application };
+  },
+
+  async listIncomingApplications(token) {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    const ownedProjectIds = new Set(database.projects.filter((project) => project.userId === user.id).map((project) => project.id));
+
+    return database.applications
+      .filter((application) => ownedProjectIds.has(application.projectId))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .map((application) => toIncomingApplication(database, application));
+  },
+
+  async decideApplication(token, applicationId, input: ApplicationDecisionInput) {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    const application = database.applications.find((entry) => entry.id === applicationId);
+
+    if (!application) {
+      throw new ApiClientError("Заявка не найдена", 404);
+    }
+
+    const project = findProjectById(database, application.projectId);
+
+    if (project.userId !== user.id) {
+      throw new ApiClientError("Недостаточно прав для изменения заявки", 403);
+    }
+
+    const nextStatus: ApplicationStatus = input.status;
+    application.status = nextStatus;
+    application.updatedAt = new Date().toISOString();
+    writeDatabase(database);
+
+    return { ...application };
   },
 };

@@ -3,11 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 
 import { AppShell } from "../app/AppShell.tsx";
 import { useAuth } from "../app/providers/AuthProvider.tsx";
-import { getHomePagePlaceholder } from "../features/profile/profile-view-model.ts";
 import { getWorkspaceSummary } from "../features/profile/workspace-summary.ts";
+import { buildHomeTaskBoard } from "../features/projects/project-board.ts";
 import { apiClient } from "../shared/api/index.ts";
 import { ApiClientError } from "../shared/api/contracts.ts";
-import { EmptyState } from "../shared/components/EmptyState.tsx";
 import { LoadingBlock } from "../shared/components/LoadingBlock.tsx";
 import { StatusBanner } from "../shared/components/StatusBanner.tsx";
 import type { Profile, Project } from "../shared/types.ts";
@@ -35,6 +34,7 @@ export function HomePage() {
     skillsCount: profile?.skills.length ?? 0,
     projectsCount: projects.length,
   });
+  const boardColumns = buildHomeTaskBoard();
 
   useEffect(() => {
     let cancelled = false;
@@ -100,8 +100,8 @@ export function HomePage() {
 
   return (
     <AppShell
-      title="Рабочая зона проекта"
-      description="Здесь собираются ваши проекты, короткие статусы профиля и быстрые действия для Sprint 2–3 сценариев."
+      title="Задачи проекта"
+      description="Итерация: Отладка и поиск. Даты: 01 мая 2026 — 14 мая 2026."
       actions={
         <Link className="primary-button primary-button--compact" to="/projects/new">
           Создать проект
@@ -134,11 +134,11 @@ export function HomePage() {
           </article>
 
           <article className="sidebar-card sidebar-card--accent">
-            <p className="sidebar-card__eyebrow">Следующий шаг</p>
-            <h3>Заполните профиль полностью</h3>
-            <p>Описание, навыки и первый проект делают ваш аккаунт пригодным для поиска и мэтчинга.</p>
-            <Link className="ghost-button" to="/profile">
-              Перейти в профиль
+            <p className="sidebar-card__eyebrow">Показ 4</p>
+            <h3>Сценарий готовится к демонстрации</h3>
+            <p>Один участник оформляет профиль, второй публикует проект, третий находит карточку через поиск и отправляет заявку.</p>
+            <Link className="ghost-button" to="/search">
+              Проверить поиск
             </Link>
           </article>
         </div>
@@ -148,10 +148,42 @@ export function HomePage() {
         {flash ? <StatusBanner message={flash.message} title={flash.title} tone={flash.tone ?? "info"} /> : null}
         {error ? <StatusBanner message={error} title="Проблема при загрузке" tone="error" /> : null}
 
-        <section className="hero-card">
-          <p className="hero-card__eyebrow">Product placeholder</p>
-          <h2>Здесь начнется лента релевантных команд и проектов</h2>
-          <p>{getHomePagePlaceholder()}</p>
+        <section className="panel task-board-panel">
+          <div className="panel__header">
+            <div>
+              <p className="panel__eyebrow">Доска задач</p>
+              <h2>Спринт 4: поиск и заявки</h2>
+            </div>
+          </div>
+
+          {loading ? (
+            <LoadingBlock label="Загружаем доску задач…" />
+          ) : (
+            <div className="task-board" aria-label="Доска задач проекта">
+              {boardColumns.map((column) => (
+                <section className={`task-column task-column--${column.accent}`} key={column.id}>
+                  <h3>{column.title}</h3>
+                  <div className="task-column__cards">
+                    {column.tasks.map((task) => (
+                      <article className="task-card" key={task.id}>
+                        <div className="task-card__body">
+                          <h4>{task.title}</h4>
+                          <p>{task.description}</p>
+                        </div>
+
+                        <div className="task-card__footer">
+                          <span className="task-card__date">{task.dateLabel}</span>
+                          <span className={`task-card__avatar task-card__avatar--${task.tone}`}>{task.assignee}</span>
+                        </div>
+
+                      </article>
+                    ))}
+                  </div>
+
+                </section>
+              ))}
+            </div>
+          )}
         </section>
 
         <section aria-label="Сводка рабочей зоны" className="overview-grid">
@@ -163,30 +195,15 @@ export function HomePage() {
           ))}
         </section>
 
-        <section className="panel">
-          <div className="panel__header">
-            <div>
-              <p className="panel__eyebrow">Projects CRUD</p>
-              <h2>Ваши проекты</h2>
+        {projects.length > 0 ? (
+          <section className="panel">
+            <div className="panel__header">
+              <div>
+                <p className="panel__eyebrow">Карточки проектов</p>
+                <h2>Детали проектов</h2>
+              </div>
             </div>
-            <Link className="ghost-button" to="/projects/new">
-              Новый проект
-            </Link>
-          </div>
 
-          {loading ? (
-            <LoadingBlock label="Собираем проекты и статистику профиля…" />
-          ) : projects.length === 0 ? (
-            <EmptyState
-              action={
-                <Link className="primary-button primary-button--compact" to="/projects/new">
-                  Создать первый проект
-                </Link>
-              }
-              description="Сформулируйте идею, стек и роли — после этого список на главной будет заполняться автоматически."
-              title="У вас пока нет проектов"
-            />
-          ) : (
             <div className="project-grid">
               {projects.map((project) => (
                 <article className="project-card" key={project.id}>
@@ -248,8 +265,8 @@ export function HomePage() {
                 </article>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        ) : null}
       </div>
     </AppShell>
   );

@@ -136,7 +136,7 @@ export function ProjectEditorPage() {
       aside={
         <div className="sidebar-stack">
           <article className="sidebar-card">
-            <p className="sidebar-card__eyebrow">Preview</p>
+            <p className="sidebar-card__eyebrow">Предпросмотр</p>
             <h3>{form.title || "Название проекта"}</h3>
             <p>{form.description || "Здесь появится краткое описание вашего проекта."}</p>
             <dl className="metric-list">
@@ -162,7 +162,7 @@ export function ProjectEditorPage() {
       <section className="panel">
         <div className="panel__header">
           <div>
-            <p className="panel__eyebrow">Projects CRUD</p>
+            <p className="panel__eyebrow">Карточка проекта</p>
             <h2>{isEditMode ? "Обновить проект" : "Создать проект"}</h2>
           </div>
         </div>
@@ -178,7 +178,7 @@ export function ProjectEditorPage() {
                 className="text-input"
                 name="title"
                 onChange={(event) => updateField("title", event.target.value)}
-                placeholder="Teamnova Platform"
+                placeholder="Платформа поиска команды"
                 type="text"
                 value={form.title}
               />
@@ -211,7 +211,7 @@ export function ProjectEditorPage() {
                 className="text-area"
                 name="roles"
                 onChange={(event) => updateField("roles", event.target.value)}
-                placeholder="Frontend developer, QA, UI designer"
+                placeholder="Frontend-разработчик, QA, UI-дизайнер"
                 rows={4}
                 value={form.roles}
               />

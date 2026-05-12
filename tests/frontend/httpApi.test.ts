@@ -95,4 +95,70 @@ export async function runHttpApiTests(): Promise<void> {
     !calls3.some((c) => c.url.endsWith("/api/auth/refresh")),
     "register не должен вызывать /refresh",
   );
+
+  // Test 4: Sprint 4 endpoints use expected REST contract
+  authClient.setSession({ token: "mvp-token", user: { id: "u", email: "a@example.com", name: "A", bio: "" } });
+  const calls4 = installFetch((call) => {
+    if (call.url.endsWith("/api/search/projects?q=React")) return { status: 200, body: [] };
+    if (call.url.endsWith("/api/search/users?q=React")) return { status: 200, body: [] };
+    if (call.url.endsWith("/api/projects/project-1/applications")) {
+      return {
+        status: 201,
+        body: {
+          id: "application-1",
+          projectId: "project-1",
+          applicantId: "u",
+          message: "Хочу в команду",
+          status: "pending",
+          createdAt: "2026-05-12T00:00:00.000Z",
+          updatedAt: "2026-05-12T00:00:00.000Z",
+        },
+      };
+    }
+    if (call.url.endsWith("/api/applications/incoming")) return { status: 200, body: [] };
+    if (call.url.endsWith("/api/applications/application-1")) {
+      return {
+        status: 200,
+        body: {
+          id: "application-1",
+          projectId: "project-1",
+          applicantId: "u",
+          message: "Хочу в команду",
+          status: "rejected",
+          createdAt: "2026-05-12T00:00:00.000Z",
+          updatedAt: "2026-05-12T00:00:01.000Z",
+        },
+      };
+    }
+    return { status: 500 };
+  });
+
+  await httpApi.searchProjects("mvp-token", { query: "React" });
+  await httpApi.searchUsers("mvp-token", { query: "React" });
+  await httpApi.applyToProject("mvp-token", "project-1", { message: "Хочу в команду" });
+  await httpApi.listIncomingApplications("mvp-token");
+  const rejected = await httpApi.decideApplication("mvp-token", "application-1", { status: "rejected" });
+
+  assert.deepEqual(
+    calls4.map((call) => [call.method, call.url]),
+    [
+      ["GET", "/api/search/projects?q=React"],
+      ["GET", "/api/search/users?q=React"],
+      ["POST", "/api/projects/project-1/applications"],
+      ["GET", "/api/applications/incoming"],
+      ["PATCH", "/api/applications/application-1"],
+    ],
+    "Sprint 4 httpApi методы должны использовать ожидаемые URL и HTTP методы",
+  );
+  assert.equal(
+    calls4[2]!.body,
+    JSON.stringify({ message: "Хочу в команду" }),
+    "applyToProject должен отправлять сообщение заявки",
+  );
+  assert.equal(
+    calls4[4]!.body,
+    JSON.stringify({ status: "rejected" }),
+    "decideApplication должен отправлять выбранный статус",
+  );
+  assert.equal(rejected.status, "rejected", "decideApplication должен возвращать статус решения");
 }

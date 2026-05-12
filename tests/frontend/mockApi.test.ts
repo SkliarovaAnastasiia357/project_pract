@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 
-import { ApiClientError } from "../../src/shared/api/contracts.ts";
+import { ApiClientError, MOCK_DB_KEY } from "../../src/shared/api/contracts.ts";
 import { mockApi, resetMockApiState } from "../../src/shared/api/mockApi.ts";
+import { writeJson } from "../../src/shared/storage.ts";
 
 async function expectApiError(
   callback: () => Promise<unknown>,
@@ -109,4 +110,43 @@ export async function runMockApiTests(): Promise<void> {
     () => mockApi.getProfile(registrationSession.token),
     "Требуется авторизация",
   );
+
+  writeJson(MOCK_DB_KEY, {
+    users: [
+      {
+        id: "user-legacy-owner",
+        email: "legacy-owner@example.com",
+        name: "Legacy Owner",
+        password: "StrongPass1",
+        bio: "",
+        skills: [],
+        createdAt: "2026-05-12T00:00:00.000Z",
+      },
+      {
+        id: "user-legacy-participant",
+        email: "legacy-participant@example.com",
+        name: "Legacy Participant",
+        password: "StrongPass1",
+        bio: "",
+        skills: [],
+        createdAt: "2026-05-12T00:00:00.000Z",
+      },
+    ],
+    projects: [
+      {
+        id: "project-legacy",
+        userId: "user-legacy-owner",
+        title: "Legacy Project",
+        description: "Old mock payload without applications array.",
+        stack: "React",
+        roles: "QA",
+        updatedAt: "2026-05-12T00:00:00.000Z",
+      },
+    ],
+    sessions: [{ token: "legacy-token", userId: "user-legacy-participant" }],
+  });
+
+  const legacyResults = await mockApi.searchProjects("legacy-token", { query: "React" });
+  assert.equal(legacyResults.length, 1, "старый mock payload без applications должен мигрировать на чтении");
+  assert.equal(legacyResults[0]!.applicationStatus, null, "у legacy проекта без заявок должен быть пустой статус");
 }

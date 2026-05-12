@@ -78,7 +78,7 @@ export function RegisterPage() {
 
   return (
     <AuthSplitLayout
-      eyebrow="Sprint 2 / user onboarding"
+      eyebrow="Спринт 2 · регистрация"
       title="Создайте аккаунт и соберите свой профиль"
       description="Регистрация сразу открывает доступ к защищенным маршрутам, профилю и проектам. После создания аккаунта вы автоматически войдете в рабочую зону."
       helperLabel="Войти"
@@ -100,7 +100,7 @@ export function RegisterPage() {
             className="text-input"
             name="email"
             onChange={(event) => updateField("email", event.target.value)}
-            placeholder="you@teamnova.app"
+            placeholder="student@example.com"
             type="email"
             value={form.email}
           />

@@ -24,13 +24,14 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
 
   return (
     <div className="workspace-shell">
-      <header className="workspace-shell__header">
-        <BrandMark caption="app workspace" />
+      <aside className="workspace-shell__sidebar">
+        <BrandMark caption="проектная платформа" />
 
         <nav className="workspace-shell__nav" aria-label="Основная навигация">
           {navigation.map((item) =>
             item.kind === "action" ? (
               <button className="workspace-shell__nav-button" key={item.label} onClick={handleLogout} type="button">
+                <span className="workspace-shell__nav-icon" aria-hidden="true" />
                 {item.label}
               </button>
             ) : (
@@ -41,6 +42,7 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
                 key={item.path}
                 to={item.path}
               >
+                <span className="workspace-shell__nav-icon" aria-hidden="true" />
                 {item.label}
               </NavLink>
             ),
@@ -52,11 +54,11 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
           <strong>{session?.user.name}</strong>
           <span className="workspace-shell__meta-email">{session?.user.email}</span>
         </div>
-      </header>
+      </aside>
 
       <main className="workspace-shell__content">
         <section className="workspace-shell__intro">
-          <p className="workspace-shell__eyebrow">Teamnova workspace</p>
+          <p className="workspace-shell__eyebrow">Рабочая область команды</p>
           <h1>{title}</h1>
           <p className="workspace-shell__description">{description}</p>
 

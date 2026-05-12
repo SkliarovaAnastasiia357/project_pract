@@ -11,4 +11,4 @@ async function detectContainerRuntime(): Promise<boolean> {
 }
 
 export const hasContainerRuntime = await detectContainerRuntime();
-export const describeWithContainers = hasContainerRuntime ? describe : describe.skip;
+export const describeWithContainers = hasContainerRuntime || process.env.CI ? describe : describe.skip;
