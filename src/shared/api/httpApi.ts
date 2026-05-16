@@ -81,6 +81,10 @@ async function request<T>(
 }
 
 export const httpApi: ApiClient = {
+  restoreSession(): Promise<AuthSession | null> {
+    return refreshSession(API_BASE_URL);
+  },
+
   async register(input: RegisterInput): Promise<AuthSession> {
     const session = await request<AuthSession>("/api/register", "POST", input, { skipRefresh: true });
     setSession(session);
