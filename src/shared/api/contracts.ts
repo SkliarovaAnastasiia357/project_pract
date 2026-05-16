@@ -33,6 +33,7 @@ export class ApiClientError extends Error {
 }
 
 export interface ApiClient {
+  restoreSession(): Promise<AuthSession | null>;
   register(input: RegisterInput): Promise<AuthSession>;
   login(input: LoginInput): Promise<AuthSession>;
   logout(token: string): Promise<void>;

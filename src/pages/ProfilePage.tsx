@@ -210,7 +210,7 @@ export function ProfilePage() {
             <section className="panel">
               <div className="panel__header">
                 <div>
-                  <p className="panel__eyebrow">Profile bio</p>
+                  <p className="panel__eyebrow">Описание профиля</p>
                   <h2>Описание</h2>
                 </div>
               </div>
@@ -236,7 +236,7 @@ export function ProfilePage() {
             <section className="panel">
               <div className="panel__header">
                 <div>
-                  <p className="panel__eyebrow">Skills</p>
+                  <p className="panel__eyebrow">Навыки</p>
                   <h2>Навыки</h2>
                 </div>
               </div>
