@@ -100,8 +100,8 @@ export function HomePage() {
 
   return (
     <AppShell
-      title="Задачи проекта"
-      description="Итерация: Отладка и поиск. Даты: 01 мая 2026 — 14 мая 2026."
+      title="Финальная подготовка"
+      description="Спринт 5: комплексное тестирование, багфиксы, UI/UX, деплой, документация и презентация. Даты: 15 мая 2026 — 28 мая 2026."
       actions={
         <Link className="primary-button primary-button--compact" to="/projects/new">
           Создать проект
@@ -134,9 +134,9 @@ export function HomePage() {
           </article>
 
           <article className="sidebar-card sidebar-card--accent">
-            <p className="sidebar-card__eyebrow">Показ 4</p>
-            <h3>Сценарий готовится к демонстрации</h3>
-            <p>Один участник оформляет профиль, второй публикует проект, третий находит карточку через поиск и отправляет заявку.</p>
+            <p className="sidebar-card__eyebrow">Спринт 5</p>
+            <h3>Финальная защита</h3>
+            <p>Демо показывает полный путь: профиль, проект, поиск, заявка и решение владельца проекта.</p>
             <Link className="ghost-button" to="/search">
               Проверить поиск
             </Link>
@@ -152,7 +152,7 @@ export function HomePage() {
           <div className="panel__header">
             <div>
               <p className="panel__eyebrow">Доска задач</p>
-              <h2>Спринт 4: поиск и заявки</h2>
+              <h2>Спринт 5: финальная версия</h2>
             </div>
           </div>
 

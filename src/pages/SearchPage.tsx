@@ -114,8 +114,8 @@ export function SearchPage() {
             </dl>
           </article>
           <article className="sidebar-card sidebar-card--accent">
-            <p className="sidebar-card__eyebrow">Показ 4</p>
-            <h3>Полный сценарий</h3>
+            <p className="sidebar-card__eyebrow">Сценарий защиты</p>
+            <h3>Полный MVP-цикл</h3>
             <p>Создатель публикует проект, участник находит его через поиск и отправляет заявку.</p>
           </article>
         </div>
