@@ -122,8 +122,10 @@
 ├── testing/
 │   ├── test-cases.md              # Описание автотестов
 │   ├── SPRINT3_TEST_CHECKLIST.md  # Чек-лист профилей и проектов
-│   └── SPRINT4_TEST_CHECKLIST.md  # Чек-лист поиска и заявок
-└── presentation/                  # Финальная презентация добавляется перед защитой
+│   ├── SPRINT4_TEST_CHECKLIST.md  # Чек-лист поиска и заявок
+│   └── SPRINT5_TEST_CHECKLIST.md  # Финальный QA и release checklist
+└── presentation/
+    └── teamnova-final-sprint5.pptx # Финальная презентация
     
  + временные файлы
 ```
@@ -139,7 +141,7 @@
 
 ```bash
 cp .env.example .env
-# отредактируй .env: JWT_SECRET, DB_PASSWORD, REDIS_URL и др.
+# отредактируй .env: POSTGRES_PASSWORD, AUTH_ACCESS_SECRET, CORS_ORIGIN и др.
 ```
 
 2. Поднять весь стек (Postgres, Redis, backend, Nginx):
@@ -203,6 +205,8 @@ npm test
 
 - Frontend-тесты запускаются командой `npm run test:frontend`
 - Backend-тесты запускаются командой `npm run test:backend` (Vitest + testcontainers, требует Docker)
+- Production-сборка проверяется командой `npm run build`
+- Финальный browser smoke выполняется в mock-режиме через Vite
 - Перед коммитом тесты проверяются через `pre-commit`
 - В GitHub статус тестов отображается через workflow `Tests`
 
@@ -236,3 +240,43 @@ OpenAPI-спецификация: [docs/api/openapi.yaml](api/openapi.yaml)
 2. Пользователь B регистрируется, заполняет профиль и добавляет навык `React`.
 3. Пользователь B находит проект через `/search` и отправляет заявку.
 4. Пользователь A открывает `/requests` и принимает или отклоняет заявку.
+
+---
+
+## Спринт 5 — Финальная версия
+
+Период: 15.05.2026–28.05.2026.
+
+Реализовано в финальном проходе:
+- Комплексный QA-gate: frontend tests, backend tests, production build, backend lint и browser smoke.
+- Исправлено восстановление mock-сессии после прямого перехода на защищенный URL. Это стабилизирует демонстрацию без реального backend.
+- Главная страница и доска задач обновлены под Спринт 5: тестирование, багфиксы, UI/UX, деплой, документация и презентация.
+- Пользовательские тексты очищены от черновых технических подписей.
+- Подготовлены финальные документы: `docs/plans.md`, `docs/status.md`, `docs/test-plan.md`, `docs/testing/SPRINT5_TEST_CHECKLIST.md`.
+- Финальная презентация: `docs/presentation/teamnova-final-sprint5.pptx`.
+
+Финальный демо-сценарий:
+1. Зарегистрировать владельца проекта.
+2. Заполнить профиль и создать проект со стеком `React, TypeScript`.
+3. Зарегистрировать участника, добавить навык `React`.
+4. Найти проект через `/search` и отправить заявку.
+5. Вернуться под владельцем, открыть `/requests` и принять или отклонить заявку.
+6. Показать восстановление mock-сессии прямым переходом на protected route.
+
+## Публикация на хостинге
+
+В репозитории подготовлен Docker/Nginx вариант:
+
+```bash
+cp .env.example .env
+cd docker
+docker compose up -d --build
+```
+
+Проверки после публикации:
+- открыть публичный URL `https://teamnova.tw1.su`;
+- проверить `/healthz` и `/readyz`;
+- пройти регистрацию, профиль, проект, поиск и заявки;
+- убедиться, что SPA fallback открывает `/home`, `/profile`, `/search`, `/requests` напрямую.
+
+Примечание: из текущей локальной среды `teamnova.tw1.su` не резолвится, поэтому фактическая проверка DNS/хостинга требует доступа к внешней инфраструктуре.
