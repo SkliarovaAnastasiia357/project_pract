@@ -1,85 +1,94 @@
-# Teamnova MVP Status
+# Teamnova Sprint 5 Status
 
-Дата: 2026-05-12
+Дата: 2026-05-16
 
 ## Current Phase
 
-MVP-доработка Спринта 4 реализована, идет публикация PR.
+Финализация Спринта 5 реализована локально. Идет подготовка commit, push и draft PR.
 
 ## Done
 
-- Выполнен `git fetch --all --prune --tags`.
-- Проверены remote-ветки: `origin/main`, `origin/frontend-sprint2-3-app`, `origin/feat/sprint2-auth-final`.
-- Локальная ветка `main` переключена и fast-forward обновлена до `origin/main` (`931d4b9`).
-- Выявлен главный разрыв: frontend mock умеет профиль/проекты, backend пока реализует только auth, `/api/me` и health.
-- Добавлены backend-таблицы и API для профилей, навыков, проектов, поиска и заявок.
-- Добавлены UI-страницы `/search` и `/requests`.
-- Обновлены README, OpenAPI, чек-листы и статус модулей.
-- Главная страница теперь показывает задачи со скрина TeamProject: чек-лист/тест-кейсы, макеты, БД, API, страницы компонентов, аналитика, документация и US/use case.
-- Из пользовательского интерфейса убраны черновые англоязычные подписи и служебные заглушки.
-- `npm test` прошел: frontend passed; backend 31 passed, 49 skipped локально из-за отсутствия Docker runtime для testcontainers.
+- Подтверждена актуальная ветка: `sprint4-search-applications`.
+- Рабочее дерево перед стартом было чистым.
+- `npm run test:frontend` прошел.
 - `npm run build` прошел.
 - `npm run lint` прошел.
-- Browser smoke в mock-режиме прошел: участник нашел проект, отправил заявку, владелец принял ее на `/requests`.
-- `npm run db:generate` после добавления Drizzle snapshot сообщает `No schema changes, nothing to migrate`.
+- `npm run build:backend` прошел.
+- `npm run db:generate` прошел: `No schema changes, nothing to migrate`.
+- `npm test` прошел: frontend passed; backend 31 passed, 49 skipped из-за локальной недоступности container runtime.
+- `npm run test:backend` прошел частично: 31 passed, 49 skipped из-за локальной недоступности container runtime для testcontainers.
+- Локальный mock-сайт поднят через Vite на `http://127.0.0.1:5174/`.
+- Browser smoke подтвердил регистрацию и автологин до `/home`.
+- Выявлен UX/демо-долг: главная страница всё еще описывает Спринт 4 и даты 01.05–14.05 вместо финального Спринта 5.
+- Выявлен баг mock-демо: после прямого перехода/перезагрузки защищенного URL приложение возвращает на `/login`, хотя mock database хранит активную session.
+- Исправлен баг восстановления mock-сессии через единый `ApiClient.restoreSession`.
+- Добавлен regression-тест `mockApi.restoreSession`.
+- Главная страница, auth-экраны, профиль, поиск, заявки и форма проекта очищены от устаревших/черновых текстов.
+- Доска задач на главной обновлена под Спринт 5.
+- Добавлен `docs/testing/SPRINT5_TEST_CHECKLIST.md`.
+- Создана финальная презентация `docs/presentation/teamnova-final-sprint5.pptx` на 9 слайдов.
+- PPTX проверен через `unzip -t`; Quick Look thumbnail первого слайда сгенерировался без ошибки.
+- Проверка публичного URL `https://teamnova.tw1.su` из локальной среды завершилась ошибкой DNS resolve.
 
 ## In Progress
 
-- Публикация ветки и PR в `main`.
-
-## TeamProject Tasks From Screenshot
-
-- Запланировано: `чек-лист / тест-кейсы`, `Макеты страниц, компонентов`.
-- В работе: `Ведение доски задач`, `Обновление схемы БД`, `Реализовать api`, `Редактирование согласно дизайну`, `Создание страниц компонентов`.
-- На проверке: `Обновление аналитики`, `оформить папку документации, гитхаб`, `Обновление US +use case`.
-- Сделано: колонка оставлена пустой, как на скрине.
+- Commit, push и draft PR.
 
 ## Next
 
-- Дождаться GitHub Actions: в CI container-based backend suites теперь запускаются, а не пропускаются.
+1. Проверить итоговый `git diff`.
+2. Запустить `npm test` как pre-commit equivalent.
+3. Commit, push, draft PR в production-ready базу.
 
 ## Decisions
 
-- Актуальная база разработки: `main`.
-- Теги проекта трактуются как элементы поля `stack`.
-- Для заявок используются статусы `pending`, `accepted`, `rejected`.
+- Архитектура backend, БД и auth/security model не меняются.
+- Восстановление сессии добавляется на уровне frontend API contract:
+  - `httpApi` продолжает использовать `/api/auth/refresh`.
+  - `mockApi` восстанавливает активную mock-сессию из localStorage.
+- Если в remote нет веток `prod`/`production`, PR создается в `main`.
 
 ## Assumptions
 
-- Публичный хостинг уже настроен отдельно; локальная задача — довести код и документацию.
-- Docker недоступен в текущей локальной среде; CI должен подтвердить backend integration-тесты с testcontainers.
+- Docker недоступен локально; backend integration suites должны подтверждаться в CI.
+- Для фактического деплоя на внешний хостинг могут потребоваться доступы к VDS/DNS, которых нет в локальном репозитории.
 
 ## Commands
 
-- `git fetch --all --prune --tags`
-- `git switch main`
-- `git pull --ff-only origin main`
 - `npm run test:frontend`
-- `npm run build:backend`
-- `npm test`
+- `npm run test:backend`
 - `npm run build`
 - `npm run lint`
-- `npm run db:generate`
 - `VITE_API_MODE=mock npm run dev -- --host 127.0.0.1 --port 5173`
+- `curl -I --max-time 15 https://teamnova.tw1.su`
 
 ## Blockers
 
-- Локальный Docker runtime недоступен, поэтому backend integration suites подтверждаются через CI.
+- Локально недоступен Docker/container runtime для полной backend integration-проверки.
+- Публичный домен `teamnova.tw1.su` не резолвится из текущей среды; публикация на хостинге требует внешнего доступа/проверки DNS.
 
 ## Audit Log
 
-- 2026-05-12: предыдущая проверка была только по `frontend-sprint2-3-app`; после полной проверки выбрана `origin/main`.
-- 2026-05-12: создан execution pack для MVP-доработки.
 - 2026-05-12: реализован Спринт 4: поиск проектов/пользователей и заявки.
-- 2026-05-12: browser smoke подтвердил MVP-цикл на `http://127.0.0.1:5173/`.
-- 2026-05-12: CI-настройка testcontainers изменена так, чтобы в CI отсутствие Docker не давало тихий skip.
+- 2026-05-16: стартован Спринт 5 финализации: QA, багфиксы, UI/UX, документация, презентация, publish flow.
+- 2026-05-16: базовые проверки frontend/build/lint зелёные; backend tests частично skipped из-за инфраструктуры.
+- 2026-05-16: найден баг восстановления mock-сессии при прямом URL.
+- 2026-05-16: баг mock-session restore исправлен и покрыт regression-тестом.
+- 2026-05-16: финальная документация и презентация добавлены в репозиторий.
+- 2026-05-16: release gate локально пройден: frontend, backend unit, build, backend build, lint, db:generate.
 
 ## Smoke Demo Checks
 
-- Регистрация, вход, refresh, выход.
+- Регистрация, вход, refresh/restore, выход.
 - Заполнение bio и навыков.
 - CRUD проекта.
 - Поиск проекта по стеку/ключевым словам.
 - Поиск пользователя по навыку.
 - Отправка заявки участником.
 - Просмотр и accept/reject заявки владельцем проекта.
+- Прямой переход на protected route после восстановления mock-сессии.
+
+## Browser Smoke Notes
+
+- Targeted browser smoke подтвердил `/projects/new` после восстановления mock-сессии и обновленную `/home` доску Спринта 5.
+- Полный form-entry smoke через in-app browser не завершен: Browser Use заблокировал `javascript:` URL workaround, а прямой ввод в поля был нестабилен из-за CDP/virtual clipboard. Полный MVP-цикл покрыт `tests/frontend/mvpCycle.test.ts`.

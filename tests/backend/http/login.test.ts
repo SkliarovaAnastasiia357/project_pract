@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createTestApp, resetDb, type TestHarness } from "./helpers/testApp.js";
 import { describeWithContainers } from "../helpers/containerRuntime.js";
+import { medianTimingRatio } from "../helpers/timing.js";
 
 describeWithContainers("POST /api/login", () => {
   let h: TestHarness;
@@ -49,18 +50,15 @@ describeWithContainers("POST /api/login", () => {
   });
 
   it("timing: nonexistent user comparable to wrong password", async () => {
-    await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "alice@example.com", password: "wrong" } });
-    await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "nobody@ex.com", password: "wrong" } });
-
-    const t1 = performance.now();
-    await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "alice@example.com", password: "wrong" } });
-    const wrongPw = performance.now() - t1;
-
-    const t2 = performance.now();
-    await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "nobody@ex.com", password: "wrong" } });
-    const unknown = performance.now() - t2;
-
-    const ratio = Math.max(wrongPw, unknown) / Math.min(wrongPw, unknown);
+    const ratio = await medianTimingRatio(
+      async () => {
+        await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "alice@example.com", password: "wrong" } });
+      },
+      async () => {
+        await h.app.inject({ method: "POST", url: "/api/login", payload: { email: "nobody@ex.com", password: "wrong" } });
+      },
+      { beforeSample: async () => { await h.redis.flushall(); } },
+    );
     expect(ratio).toBeLessThan(3);
   });
 });

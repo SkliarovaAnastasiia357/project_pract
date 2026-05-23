@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
 import { apiClient } from "../../shared/api/index.ts";
 import {
-  refreshSession,
   setSession as setAuthClientSession,
   subscribeAuthBroadcast,
 } from "../../shared/api/authClient.ts";
@@ -25,15 +24,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const restored = await refreshSession();
+      const restored = await apiClient.restoreSession();
       if (cancelled) return;
-      if (restored) {
-        setSession(restored);
-        setStatus("authenticated");
-      } else {
-        setSession(null);
-        setStatus("anonymous");
-      }
+      setAuthClientSession(restored);
+      setSession(restored);
+      setStatus(restored ? "authenticated" : "anonymous");
     })();
     return () => {
       cancelled = true;

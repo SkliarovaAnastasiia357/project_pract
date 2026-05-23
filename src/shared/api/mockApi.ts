@@ -132,6 +132,13 @@ function createSession(database: MockDatabase, user: UserRecord): AuthSession {
   };
 }
 
+function toSession(user: UserRecord, token: string): AuthSession {
+  return {
+    token,
+    user: toPublicUser(user),
+  };
+}
+
 function normalizeProjectInput(input: ProjectInput): ProjectInput {
   return {
     title: input.title.trim(),
@@ -225,6 +232,25 @@ export function resetMockApiState(): void {
 }
 
 export const mockApi: ApiClient = {
+  async restoreSession(): Promise<AuthSession | null> {
+    await waitForMock();
+
+    const database = readDatabase();
+    const activeSession = database.sessions.at(-1);
+
+    if (!activeSession) {
+      return null;
+    }
+
+    const user = database.users.find((entry) => entry.id === activeSession.userId);
+
+    if (!user) {
+      return null;
+    }
+
+    return toSession(user, activeSession.token);
+  },
+
   async register(input: RegisterInput): Promise<AuthSession> {
     await waitForMock();
 

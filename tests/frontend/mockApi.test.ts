@@ -41,6 +41,13 @@ export async function runMockApiTests(): Promise<void> {
   assert.equal(registrationSession.user.email, "frontend@example.com", "регистрация должна возвращать пользователя");
   assert.equal(registrationSession.token.startsWith("mock-token-"), true, "регистрация должна возвращать mock jwt");
 
+  const restoredRegistrationSession = await mockApi.restoreSession();
+  assert.deepEqual(
+    restoredRegistrationSession,
+    registrationSession,
+    "mockApi должен восстанавливать активную сессию после перезагрузки клиента",
+  );
+
   const initialProfile = await mockApi.getProfile(registrationSession.token);
   assert.deepEqual(initialProfile.skills, [], "у нового пользователя список навыков должен быть пустым");
   assert.equal(initialProfile.bio, "", "у нового пользователя описание должно быть пустым");

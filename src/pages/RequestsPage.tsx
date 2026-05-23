@@ -120,7 +120,7 @@ export function RequestsPage() {
         <section className="panel">
           <div className="panel__header">
             <div>
-              <p className="panel__eyebrow">Applications</p>
+              <p className="panel__eyebrow">Заявки</p>
               <h2>Кандидаты в ваши проекты</h2>
             </div>
           </div>

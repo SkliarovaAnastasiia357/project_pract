@@ -127,7 +127,7 @@ export function ProjectEditorPage() {
   return (
     <AppShell
       title={isEditMode ? "Редактирование проекта" : "Новый проект"}
-      description="Форма использует единый контракт с backend и mock API: обязательные поля, ошибки формы и переход назад в рабочую зону."
+      description="Заполните название, идею, стек и роли. После сохранения карточка сразу появится в рабочей зоне и поиске."
       actions={
         <Link className="ghost-button" to="/home">
           Вернуться на главную
