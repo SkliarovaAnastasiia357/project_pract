@@ -6,6 +6,7 @@ import {
   dummyVerify,
   DUMMY_HASH,
 } from "../../../src/backend/auth/password.js";
+import { medianTimingRatio } from "../helpers/timing.js";
 
 describe("password", () => {
   it("hashes to argon2id format", async () => {
@@ -61,19 +62,10 @@ describe("password", () => {
 
   it("dummyVerify timing is comparable to real verify", async () => {
     const h = await hashPassword("secret123");
-    // Warm-up pass to amortize caches
-    await verifyPassword(h, "wrong");
-    await dummyVerify("anything");
-
-    const t1 = performance.now();
-    await verifyPassword(h, "wrong");
-    const real = performance.now() - t1;
-
-    const t2 = performance.now();
-    await dummyVerify("anything");
-    const dummy = performance.now() - t2;
-
-    const ratio = Math.max(real, dummy) / Math.min(real, dummy);
+    const ratio = await medianTimingRatio(
+      async () => { await verifyPassword(h, "wrong"); },
+      async () => { await dummyVerify("anything"); },
+    );
     expect(ratio).toBeLessThan(3);
   });
 });

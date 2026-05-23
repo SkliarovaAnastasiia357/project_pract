@@ -23,6 +23,7 @@ Prepare the final Teamnova branch for merge into `main`: integrate the latest re
 - Updated docs: README, plan/status/test-plan, test cases, module progress, Sprint 5 checklist.
 - Added final deck: `docs/presentation/teamnova-final-sprint5.pptx`.
 - Removed the final docs heading that exposed "Спринт 2"; the auth section is now "Аутентификация и безопасность".
+- Stabilized backend timing tests by comparing median timings across interleaved samples instead of one noisy measurement.
 
 ## Verification
 
@@ -32,11 +33,12 @@ Prepare the final Teamnova branch for merge into `main`: integrate the latest re
 - `npm run build:backend` passed.
 - `npm run lint` passed.
 - `npm run db:generate` reported no schema changes.
+- `npx vitest run -c vitest.backend.config.ts tests/backend/auth/password.test.ts tests/backend/http/login.test.ts` passed locally with the containerized login suite skipped due local Docker/runtime limits.
 - Vite preview smoke returned `200 text/html` for `/`, `/login`, `/search`, `/requests`, and `/projects/new`.
 - Search confirmed no `спринт 2` / `sprint 2` / `sprint2` text remains in `src`, `tests`, `docs`, `dist`, or the final pptx slide XML.
 
 ## Open Items
 
-- GitHub Actions are running on PR #9 and must confirm backend integration suites.
+- GitHub Actions must confirm the pushed timing-test stabilization on PR #9.
 - Mark PR #9 ready or merge after CI is green and the team approves.
 - External DNS/hosting for `https://teamnova.tw1.su` requires infrastructure access.

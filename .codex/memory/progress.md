@@ -18,3 +18,4 @@
 - Removed the visible "Спринт 2" label from final README docs.
 - Re-ran release checks: frontend tests, backend tests, build, backend build, lint, db generate, and Vite preview route smoke.
 - Pushed `codex/sprint5-docs-deck` and opened draft PR #9 to `main`.
+- Investigated failed CI backend login timing test and stabilized timing assertions with interleaved median samples.
