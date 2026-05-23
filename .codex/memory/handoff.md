@@ -2,6 +2,8 @@
 
 Final Teamnova release work is on `codex/sprint5-docs-deck`, based on `origin/main`.
 
+PR: `https://github.com/SkliarovaAnastasiia357/project_pract/pull/9` (draft)
+
 ## What Changed
 
 - Fixed mock demo session restoration by adding `ApiClient.restoreSession`.
@@ -29,4 +31,4 @@ Final Teamnova release work is on `codex/sprint5-docs-deck`, based on `origin/ma
 
 ## Next Step
 
-Commit the final README/memory update, push `codex/sprint5-docs-deck`, and open a PR to `main`.
+Wait for GitHub Actions on PR #9, then mark the PR ready or merge after team approval.

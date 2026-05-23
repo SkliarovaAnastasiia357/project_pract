@@ -9,6 +9,7 @@ Prepare the final Teamnova branch for merge into `main`: integrate the latest re
 - Current branch: `codex/sprint5-docs-deck`
 - Remote: `origin`
 - PR base: `origin/main`
+- PR: `https://github.com/SkliarovaAnastasiia357/project_pract/pull/9` (draft)
 - Production branch check: no `prod`, `production`, `last`, or `version` refs exist locally or on `origin`; use `main` as the production-ready base.
 
 ## Implemented On Final Branch
@@ -36,6 +37,6 @@ Prepare the final Teamnova branch for merge into `main`: integrate the latest re
 
 ## Open Items
 
-- Commit the final README/memory update, push, and open the PR to `main`.
-- GitHub Actions must confirm backend integration suites.
+- GitHub Actions are running on PR #9 and must confirm backend integration suites.
+- Mark PR #9 ready or merge after CI is green and the team approves.
 - External DNS/hosting for `https://teamnova.tw1.su` requires infrastructure access.

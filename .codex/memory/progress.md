@@ -17,3 +17,4 @@
 - Confirmed `codex/sprint5-docs-deck` contains `origin/main` plus Sprint 5 app polish and final docs/deck commits.
 - Removed the visible "Спринт 2" label from final README docs.
 - Re-ran release checks: frontend tests, backend tests, build, backend build, lint, db generate, and Vite preview route smoke.
+- Pushed `codex/sprint5-docs-deck` and opened draft PR #9 to `main`.
