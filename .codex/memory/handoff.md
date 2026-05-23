@@ -1,6 +1,6 @@
 # Handoff
 
-Sprint 5 finalization has been implemented locally on `sprint4-search-applications`.
+Final Teamnova release work is on `codex/sprint5-docs-deck`, based on `origin/main`.
 
 ## What Changed
 
@@ -9,6 +9,7 @@ Sprint 5 finalization has been implemented locally on `sprint4-search-applicatio
 - Added regression coverage for mock session restore and Sprint 5 board expectations.
 - Updated final docs and added `docs/testing/SPRINT5_TEST_CHECKLIST.md`.
 - Created `docs/presentation/teamnova-final-sprint5.pptx` with 9 slides.
+- Renamed the final README auth heading from "Спринт 2 — Аутентификация" to "Аутентификация и безопасность".
 
 ## Verification Already Run
 
@@ -18,15 +19,14 @@ Sprint 5 finalization has been implemented locally on `sprint4-search-applicatio
 - `npm run build:backend`
 - `npm run lint`
 - `npm run db:generate`
-- `npm test`
-- Targeted browser smoke on local Vite mock URL.
+- Vite preview smoke: `/`, `/login`, `/search`, `/requests`, `/projects/new` returned `200 text/html`.
+- Text search: no `спринт 2` / `sprint 2` / `sprint2` remains in `src`, `tests`, `docs`, `dist`, or the final pptx slide XML.
 
 ## Known Caveats
 
-- Full backend integration suites need CI because local Docker runtime is unavailable.
-- `teamnova.tw1.su` did not resolve from this local environment.
-- Full form-entry browser smoke was blocked by in-app browser CDP/virtual clipboard instability; full MVP cycle remains covered by frontend contract tests.
+- Full backend integration suites need CI because local Docker/runtime integration is unavailable locally.
+- External DNS/hosting for `https://teamnova.tw1.su` requires infrastructure access.
 
 ## Next Step
 
-Inspect final diff, stage intended files, commit, push branch, create draft PR to `main` unless a production branch appears.
+Commit the final README/memory update, push `codex/sprint5-docs-deck`, and open a PR to `main`.
