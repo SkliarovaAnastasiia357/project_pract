@@ -1,94 +1,67 @@
-# Teamnova Sprint 5 Status
+# Teamnova Final MVP Status
 
-Дата: 2026-05-16
+Дата: 2026-05-30
 
 ## Current Phase
 
-Финализация Спринта 5 реализована локально. Идет подготовка commit, push и draft PR.
+Финальный MVP приведен к формату защиты по кейсу: функциональное ядро реализовано, PR #9 влит в `main`, текущая ветка `codex/final-purple-release` содержит финальную локальную полировку темного фиолетового UI, документов и презентации.
 
 ## Done
 
-- Подтверждена актуальная ветка: `sprint4-search-applications`.
-- Рабочее дерево перед стартом было чистым.
-- `npm run test:frontend` прошел.
-- `npm run build` прошел.
-- `npm run lint` прошел.
-- `npm run build:backend` прошел.
-- `npm run db:generate` прошел: `No schema changes, nothing to migrate`.
-- `npm test` прошел: frontend passed; backend 31 passed, 49 skipped из-за локальной недоступности container runtime.
-- `npm run test:backend` прошел частично: 31 passed, 49 skipped из-за локальной недоступности container runtime для testcontainers.
-- Локальный mock-сайт поднят через Vite на `http://127.0.0.1:5174/`.
-- Browser smoke подтвердил регистрацию и автологин до `/home`.
-- Выявлен UX/демо-долг: главная страница всё еще описывает Спринт 4 и даты 01.05–14.05 вместо финального Спринта 5.
-- Выявлен баг mock-демо: после прямого перехода/перезагрузки защищенного URL приложение возвращает на `/login`, хотя mock database хранит активную session.
-- Исправлен баг восстановления mock-сессии через единый `ApiClient.restoreSession`.
-- Добавлен regression-тест `mockApi.restoreSession`.
-- Главная страница, auth-экраны, профиль, поиск, заявки и форма проекта очищены от устаревших/черновых текстов.
-- Доска задач на главной обновлена под Спринт 5.
-- Добавлен `docs/testing/SPRINT5_TEST_CHECKLIST.md`.
-- Создана финальная презентация `docs/presentation/teamnova-final-sprint5.pptx` на 9 слайдов.
-- PPTX проверен через `unzip -t`; Quick Look thumbnail первого слайда сгенерировался без ошибки.
-- Проверка публичного URL `https://teamnova.tw1.su` из локальной среды завершилась ошибкой DNS resolve.
+- `origin/main` содержит полный MVP после merge PR #9.
+- Реализованы регистрация, вход, выход, восстановление mock-сессии и защита маршрутов.
+- Реализованы профиль, описание, навыки, CRUD проектов, поиск проектов/участников и заявки на участие.
+- Владелец проекта видит входящие заявки и принимает или отклоняет кандидатов.
+- UI текущего приложения возвращен к темной фиолетовой системе Teamnova из старого макета: темный фон, purple accents, glowing brand mark, темные карточки, формы, кнопки, статусы и responsive layout.
+- Исправлен visual overflow доски задач на desktop/mobile: колонки переносятся и не обрезаются.
+- Финальный ручной MVP-cycle в mock-режиме пройден через Playwright дважды: desktop и mobile. Сценарий включает CRUD проекта, профиль/навыки, поиск, заявку, accept/reject и refresh защищенных маршрутов.
+- Desktop screenshots проверены для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
+- Mobile screenshots проверены для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
+- Финальная презентация `docs/presentation/teamnova-final-sprint5.pptx` доведена до 10 слайдов, stale PR/push copy убран, PPTX integrity проверен.
+- Docker/Nginx конфигурация для публикации есть в репозитории.
 
-## In Progress
+## Verification Evidence
 
-- Commit, push и draft PR.
+- 2026-05-30 baseline в worktree:
+  - `npm run build` прошел.
+  - `npm run test:frontend` прошел.
+  - `npm run test:backend` прошел локально: 31 passed, 49 skipped из-за Docker/testcontainers runtime caveat.
+- 2026-05-30 после purple UI pass:
+  - `npm run build` прошел.
+  - `npm run test:frontend` прошел.
+  - `npm run test:backend` прошел локально: 31 passed, 49 skipped из-за Docker/testcontainers runtime caveat.
+- Ручные smoke screenshots сохранены локально в `/private/tmp/teamnova-purple-smoke/`.
+- 2026-05-30 presentation gate:
+  - `unzip -t docs/presentation/teamnova-final-sprint5.pptx` прошел.
+  - PPTX содержит 10 слайдов и финальный slide gate.
+- 2026-05-30 final manual gate:
+  - Playwright desktop MVP-cycle прошел, screenshots: `/private/tmp/teamnova-final-smoke/desktop-final-*.png`.
+  - Playwright mobile MVP-cycle прошел, screenshots: `/private/tmp/teamnova-final-smoke/mobile-final-*.png`.
+  - Direct refresh проверен для `/home`, `/profile`, `/search`, `/requests`, `/projects/new` и project edit route; горизонтальный overflow = 0 на desktop и mobile.
+- 2026-05-30 final automated gate прошел дважды:
+  - `npm run test:frontend` прошел.
+  - `npm run test:backend` прошел локально: 31 passed, 49 skipped из-за Docker/testcontainers runtime caveat.
+  - `npm run build` прошел.
+  - `npm run build:backend` прошел.
+  - `npm run lint` прошел.
+  - `npm run db:generate` прошел: No schema changes, nothing to migrate.
 
-## Next
+## Remaining External Checks
 
-1. Проверить итоговый `git diff`.
-2. Запустить `npm test` как pre-commit equivalent.
-3. Commit, push, draft PR в production-ready базу.
+1. Проверить публичный DNS/hosting `teamnova.tw1.su` после получения доступа к внешней инфраструктуре.
+2. На опубликованном стенде проверить `/healthz`, `/readyz` и SPA fallback для защищенных маршрутов.
 
-## Decisions
+## Known Limitations
 
-- Архитектура backend, БД и auth/security model не меняются.
-- Восстановление сессии добавляется на уровне frontend API contract:
-  - `httpApi` продолжает использовать `/api/auth/refresh`.
-  - `mockApi` восстанавливает активную mock-сессию из localStorage.
-- Если в remote нет веток `prod`/`production`, PR создается в `main`.
+- Локальная среда не предоставляет полноценный Docker/container runtime для всех backend integration suites; CI должен подтверждать container-based tests.
+- Публичный домен `https://teamnova.tw1.su` из текущей среды не подтвержден. Фактическая DNS/hosting-проверка требует доступа к внешней инфраструктуре.
 
-## Assumptions
+## Final Demo Scenario
 
-- Docker недоступен локально; backend integration suites должны подтверждаться в CI.
-- Для фактического деплоя на внешний хостинг могут потребоваться доступы к VDS/DNS, которых нет в локальном репозитории.
-
-## Commands
-
-- `npm run test:frontend`
-- `npm run test:backend`
-- `npm run build`
-- `npm run lint`
-- `VITE_API_MODE=mock npm run dev -- --host 127.0.0.1 --port 5173`
-- `curl -I --max-time 15 https://teamnova.tw1.su`
-
-## Blockers
-
-- Локально недоступен Docker/container runtime для полной backend integration-проверки.
-- Публичный домен `teamnova.tw1.su` не резолвится из текущей среды; публикация на хостинге требует внешнего доступа/проверки DNS.
-
-## Audit Log
-
-- 2026-05-12: реализован Спринт 4: поиск проектов/пользователей и заявки.
-- 2026-05-16: стартован Спринт 5 финализации: QA, багфиксы, UI/UX, документация, презентация, publish flow.
-- 2026-05-16: базовые проверки frontend/build/lint зелёные; backend tests частично skipped из-за инфраструктуры.
-- 2026-05-16: найден баг восстановления mock-сессии при прямом URL.
-- 2026-05-16: баг mock-session restore исправлен и покрыт regression-тестом.
-- 2026-05-16: финальная документация и презентация добавлены в репозиторий.
-- 2026-05-16: release gate локально пройден: frontend, backend unit, build, backend build, lint, db:generate.
-
-## Smoke Demo Checks
-
-- Регистрация, вход, refresh/restore, выход.
-- Заполнение bio и навыков.
-- CRUD проекта.
-- Поиск проекта по стеку/ключевым словам.
-- Поиск пользователя по навыку.
-- Отправка заявки участником.
-- Просмотр и accept/reject заявки владельцем проекта.
-- Прямой переход на protected route после восстановления mock-сессии.
-
-## Browser Smoke Notes
-
-- Targeted browser smoke подтвердил `/projects/new` после восстановления mock-сессии и обновленную `/home` доску Спринта 5.
-- Полный form-entry smoke через in-app browser не завершен: Browser Use заблокировал `javascript:` URL workaround, а прямой ввод в поля был нестабилен из-за CDP/virtual clipboard. Полный MVP-цикл покрыт `tests/frontend/mvpCycle.test.ts`.
+1. Открыть приложение и показать темный фиолетовый Teamnova UI.
+2. Зарегистрировать владельца проекта и попасть на `/home`.
+3. Заполнить профиль и создать проект со стеком `React, TypeScript`.
+4. Зарегистрировать участника, заполнить профиль и добавить навык `React`.
+5. Через `/search` найти проект и отправить заявку.
+6. Вернуться под владельцем, открыть `/requests` и принять или отклонить заявку.
+7. Обновить protected route и подтвердить, что mock-сессия восстановилась.

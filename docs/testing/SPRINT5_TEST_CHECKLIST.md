@@ -1,6 +1,6 @@
 # Sprint 5 Final QA Checklist
 
-Дата: 2026-05-16
+Дата: 2026-05-30
 Период: 15.05.2026–28.05.2026
 
 ## Automated Gates
@@ -11,7 +11,7 @@
 - [x] `npm run test:backend` локально: unit suites прошли, integration suites пропущены без Docker runtime
 - [x] `npm run build:backend`
 - [x] `npm run db:generate`
-- [ ] GitHub Actions после push/PR
+- [x] GitHub Actions `test` passed на PR #9
 
 ## Browser Smoke
 
@@ -20,7 +20,8 @@
 - [x] Прямой переход на `/projects/new` восстанавливает mock-сессию и не возвращает на `/login`.
 - [x] `/home` показывает Спринт 5 и финальную доску задач.
 - [x] Полный MVP-цикл подтвержден frontend contract test `mvpCycle.test.ts`.
-- [ ] Полный form-entry browser smoke через in-app browser.
+- [x] Полный form-entry browser smoke пройден через Playwright дважды: desktop owner -> project CRUD -> member -> search -> application -> owner accept/reject и mobile owner -> project CRUD -> member -> search -> application -> owner accept/reject.
+- [x] Protected route refresh проверен для `/home`, `/profile`, `/search`, `/requests`, `/projects/new` и project edit route.
 
 ## UI/UX Review
 
@@ -28,7 +29,9 @@
 - [x] Старые подписи `Показ 4`, `Profile bio`, `Skills`, `Applications` убраны из пользовательских экранов.
 - [x] Форма проекта описана пользовательским языком, без технического упора на mock/backend contract.
 - [x] Быстрый desktop smoke для `/home` и `/projects/new`.
-- [ ] Mobile layout smoke перед финальным merge.
+- [x] Темный фиолетовый Teamnova UI восстановлен по старому макету.
+- [x] Desktop layout smoke для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
+- [x] Mobile layout smoke для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
 
 ## Documentation
 
@@ -37,7 +40,7 @@
 - [x] `docs/test-plan.md` описывает финальные gates.
 - [x] `docs/README.md` обновлен под финальную версию.
 - [x] `docs/testing/test-cases.md` обновлен с учетом session restore и Sprint 5 board.
-- [x] Финальная презентация создана и проверена через PPTX integrity + Quick Look thumbnail.
+- [x] Финальная презентация доведена до 10-15 слайдов и проверена через PPTX integrity.
 
 ## Release / Hosting
 
@@ -51,4 +54,4 @@
 
 - Локальная среда не дает Docker runtime, поэтому backend integration suites требуют CI.
 - `teamnova.tw1.su` не резолвится из текущей среды; финальная DNS/hosting-проверка требует доступа к внешней инфраструктуре.
-- Полный browser form-entry smoke не завершен из-за нестабильного CDP/virtual clipboard в in-app browser; полный сценарий защищен frontend contract test.
+- Ручной browser smoke выполнялся через Playwright screenshots в mock-режиме; публикация на внешнем домене проверяется отдельно после получения инфраструктурного доступа.

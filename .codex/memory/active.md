@@ -2,43 +2,42 @@
 
 ## Current Task
 
-Prepare the final Teamnova branch for merge into `main`: integrate the latest release work, remove the visible "Sprint 2" label from final docs, verify the app, push, and open a PR.
+Final local MVP completion for Teamnova is implemented on `codex/final-purple-release`. Product changes are committed locally and not pushed.
 
 ## Branch
 
-- Current branch: `codex/sprint5-docs-deck`
-- Remote: `origin`
-- PR base: `origin/main`
-- PR: `https://github.com/SkliarovaAnastasiia357/project_pract/pull/9` (draft)
-- Production branch check: no `prod`, `production`, `last`, or `version` refs exist locally or on `origin`; use `main` as the production-ready base.
+- Current branch: `codex/final-purple-release`
+- Base: `origin/main`
+- Local commits:
+  - `a69a830 style(final): restore purple Teamnova UI`
+  - `aa8ec20 docs(final): record release verification`
+- Push/PR status: not pushed by request; publish only after explicit user instruction.
 
-## Implemented On Final Branch
+## Implemented
 
-- Branch is based on `origin/main` and contains the Sprint 5 app polish and final docs/deck commits.
-- Added `ApiClient.restoreSession`.
-- `httpApi.restoreSession` uses `/api/auth/refresh`.
-- `mockApi.restoreSession` restores the latest active mock session from localStorage-backed mock DB.
-- `AuthProvider` boots through `apiClient.restoreSession`.
-- Updated Sprint 5 home board and user-facing UI copy.
-- Updated docs: README, plan/status/test-plan, test cases, module progress, Sprint 5 checklist.
-- Added final deck: `docs/presentation/teamnova-final-sprint5.pptx`.
-- Removed the final docs heading that exposed "Спринт 2"; the auth section is now "Аутентификация и безопасность".
-- Stabilized backend timing tests by comparing median timings across interleaved samples instead of one noisy measurement.
+- Restored the dark purple Teamnova UI across auth, home, profile, project form/edit, search, requests, loading/empty/error states.
+- Updated the home task board from draft PR/push wording to final gate, ready-to-submit, and external hosting checks.
+- Fixed task-board desktop/mobile clipping by letting columns wrap and removing horizontal page overflow.
+- Improved search result application button copy after a request is already submitted.
+- Expanded `docs/presentation/teamnova-final-sprint5.pptx` from 9 to 10 slides and removed stale PR/push copy.
+- Updated final docs/checklists/status/test plan/module progress with release evidence and truthful external hosting caveat.
 
 ## Verification
 
-- `npm run test:frontend` passed.
-- `npm run test:backend` passed locally with 31 passed and 49 skipped because Docker/testcontainers runtime is unavailable.
-- `npm run build` passed.
-- `npm run build:backend` passed.
-- `npm run lint` passed.
-- `npm run db:generate` reported no schema changes.
-- `npx vitest run -c vitest.backend.config.ts tests/backend/auth/password.test.ts tests/backend/http/login.test.ts` passed locally with the containerized login suite skipped due local Docker/runtime limits.
-- Vite preview smoke returned `200 text/html` for `/`, `/login`, `/search`, `/requests`, and `/projects/new`.
-- Search confirmed no `спринт 2` / `sprint 2` / `sprint2` text remains in `src`, `tests`, `docs`, `dist`, or the final pptx slide XML.
+- Full automated release gate passed twice on 2026-05-30:
+  - `npm run test:frontend`
+  - `npm run test:backend` — 31 passed, 49 skipped due Docker/testcontainers local runtime caveat.
+  - `npm run build`
+  - `npm run build:backend`
+  - `npm run lint`
+  - `npm run db:generate` — no schema changes.
+- PPTX integrity passed: `unzip -t docs/presentation/teamnova-final-sprint5.pptx`.
+- Final manual Playwright smoke passed twice:
+  - desktop MVP-cycle with project CRUD, profile/skills, search, application, accept/reject, protected route refresh.
+  - mobile MVP-cycle with the same route/function coverage.
+- Final screenshots are in `/private/tmp/teamnova-final-smoke/`.
 
 ## Open Items
 
-- GitHub Actions must confirm the pushed timing-test stabilization on PR #9.
-- Mark PR #9 ready or merge after CI is green and the team approves.
-- External DNS/hosting for `https://teamnova.tw1.su` requires infrastructure access.
+- External DNS/hosting for `https://teamnova.tw1.su` still requires infrastructure access.
+- If the team wants publication, next step is push `codex/final-purple-release` and open/prepare a PR to `main`.
