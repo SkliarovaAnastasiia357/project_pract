@@ -195,7 +195,11 @@ export function SearchPage() {
                               onClick={() => void handleApply(project)}
                               type="button"
                             >
-                              {applyingId === project.id ? "Отправляем…" : "Откликнуться"}
+                              {applyingId === project.id
+                                ? "Отправляем…"
+                                : project.applicationStatus
+                                  ? applicationLabels[project.applicationStatus]
+                                  : "Откликнуться"}
                             </button>
                           )}
                         </div>
