@@ -1,6 +1,6 @@
 # Teamnova Sprint 5 Test Plan
 
-Дата: 2026-05-16
+Дата: 2026-05-30
 
 ## Frontend Contract Tests
 
@@ -51,6 +51,8 @@ Scenarios:
 5. Register/login participant, add skill `React`, search project, send application.
 6. Login as owner, open incoming requests, accept or reject application.
 7. Inspect `/home`, `/profile`, `/projects/new`, `/search`, `/requests` for Sprint 5 copy and obvious layout issues.
+8. Inspect the same routes in the dark purple Teamnova design on desktop and mobile viewports.
+9. Confirm task board columns wrap instead of clipping inside the workspace layout.
 
 ## Documentation Checks
 
@@ -63,6 +65,7 @@ Pass criteria:
 - Public routes and API routes match the current code.
 - Sprint 5 dates and scope are represented consistently.
 - Deployment limitations are explicit when external DNS/hosting cannot be verified locally.
+- Status docs do not describe obsolete draft PR / pre-merge work as current.
 
 ## Presentation Checks
 
@@ -71,9 +74,10 @@ Artifact:
 
 Pass criteria:
 - Deck is editable PowerPoint.
+- Deck contains 10-15 slides as required by the case assignment.
 - Slides cover problem, solution, audience, MVP, architecture, demo flow, QA, deployment and final results.
 - Facts match README and implemented code.
-- Rendered preview pages are legible and do not show layout clipping.
+- PPTX integrity check passes and slide text does not contain stale draft PR / pre-merge copy.
 
 ## Full Release Gate
 
@@ -88,6 +92,6 @@ Commands:
 Pass criteria:
 - All runnable local checks pass.
 - Any skipped check has a documented infrastructure reason.
-- Browser smoke passes.
+- Browser smoke passes twice: full MVP desktop flow and mobile route/layout flow.
 - Documentation and presentation are updated.
 - `git diff` contains only Sprint 5 scope changes.
