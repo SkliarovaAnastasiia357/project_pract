@@ -1,36 +1,44 @@
 # Handoff
 
-Final Teamnova release work is on `codex/sprint5-docs-deck`, based on `origin/main`.
-
-PR: `https://github.com/SkliarovaAnastasiia357/project_pract/pull/9` (draft)
+Final Teamnova MVP completion is implemented in worktree `.worktrees/final-purple-release` on branch `codex/final-purple-release`, based on `origin/main`.
 
 ## What Changed
 
-- Fixed mock demo session restoration by adding `ApiClient.restoreSession`.
-- Updated the app UI for Sprint 5: final home board, auth page eyebrow, profile/search/requests/project copy.
-- Added regression coverage for mock session restore and Sprint 5 board expectations.
-- Updated final docs and added `docs/testing/SPRINT5_TEST_CHECKLIST.md`.
-- Created `docs/presentation/teamnova-final-sprint5.pptx` with 9 slides.
-- Renamed the final README auth heading from "Спринт 2 — Аутентификация" to "Аутентификация и безопасность".
-- Stabilized backend auth timing tests after CI exposed a noisy single-sample assertion.
+- Restored the dark purple Teamnova design system from the old mock across current Sprint 5 MVP screens.
+- Updated `/home` board to final gate/ready/external-check wording instead of draft PR/push tasks.
+- Fixed task board clipping on desktop/mobile.
+- Improved the submitted-application button state in `/search`.
+- Updated final docs and release checklists with current evidence.
+- Expanded `docs/presentation/teamnova-final-sprint5.pptx` to 10 slides and removed stale PR/push copy.
+
+## Local Commits
+
+- `a69a830 style(final): restore purple Teamnova UI`
+- `aa8ec20 docs(final): record release verification`
+
+No push was performed.
 
 ## Verification Already Run
 
-- `npm run test:frontend`
-- `npm run test:backend` — 31 passed, 49 skipped due to missing Docker/testcontainers runtime.
-- `npm run build`
-- `npm run build:backend`
-- `npm run lint`
-- `npm run db:generate`
-- `npx vitest run -c vitest.backend.config.ts tests/backend/auth/password.test.ts tests/backend/http/login.test.ts`
-- Vite preview smoke: `/`, `/login`, `/search`, `/requests`, `/projects/new` returned `200 text/html`.
-- Text search: no `спринт 2` / `sprint 2` / `sprint2` remains in `src`, `tests`, `docs`, `dist`, or the final pptx slide XML.
+- Automated gate twice:
+  - `npm run test:frontend`
+  - `npm run test:backend` — 31 passed, 49 skipped locally because Docker/testcontainers integration suites are unavailable.
+  - `npm run build`
+  - `npm run build:backend`
+  - `npm run lint`
+  - `npm run db:generate`
+- `unzip -t docs/presentation/teamnova-final-sprint5.pptx`
+- Playwright manual smoke twice:
+  - desktop full MVP-cycle
+  - mobile full MVP-cycle
+  - protected refresh for `/home`, `/profile`, `/search`, `/requests`, `/projects/new`, and project edit route
+  - horizontal overflow checked as 0 on desktop and mobile
 
 ## Known Caveats
 
-- Full backend integration suites need CI because local Docker/runtime integration is unavailable locally.
+- Full backend integration suites need CI or a local Docker/container runtime.
 - External DNS/hosting for `https://teamnova.tw1.su` requires infrastructure access.
 
 ## Next Step
 
-Wait for GitHub Actions on PR #9 after the timing-test stabilization push, then mark the PR ready or merge after team approval.
+If publication is requested, push `codex/final-purple-release` and create/update a PR to `main`. Otherwise this branch is ready as a local final release checkpoint.
