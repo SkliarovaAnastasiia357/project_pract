@@ -41,7 +41,7 @@
 5. Хостинг: Публичная ссылка, доступная с любого браузера.
  
 <p align="center">
-  <a href="https://teamnova.tw1.su">TEAMNOVA</a>
+  <a href="http://46.173.25.212/login">TEAMNOVA</a>
 </p>
 
 <p align="center">
