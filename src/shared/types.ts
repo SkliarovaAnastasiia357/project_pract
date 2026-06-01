@@ -33,10 +33,19 @@ export type Project = {
 
 export type ApplicationStatus = "pending" | "accepted" | "rejected";
 
+export type ProjectMatch = {
+  score: number;
+  matchedSkills: string[];
+  matchedRoles: string[];
+  matchedQuery: string[];
+  reasons: string[];
+};
+
 export type ProjectSearchResult = Project & {
   ownerId: string;
   ownerName: string;
   applicationStatus: ApplicationStatus | null;
+  match?: ProjectMatch;
 };
 
 export type UserSearchResult = User & {
@@ -53,6 +62,12 @@ export type ProjectApplication = {
   updatedAt: string;
 };
 
+export type ProjectTeamMember = User & {
+  projectId: string;
+  acceptedAt: string;
+  skills: Skill[];
+};
+
 export type IncomingApplication = {
   id: string;
   message: string;
@@ -66,6 +81,30 @@ export type IncomingApplication = {
   applicant: User & {
     skills: Skill[];
   };
+};
+
+export type DashboardMetrics = {
+  ownedProjectsCount: number;
+  searchableProjectsCount: number;
+  searchableUsersCount: number;
+  incomingApplicationsCount: number;
+  pendingApplicationsCount: number;
+  acceptedTeamMembersCount: number;
+  profileSkillsCount: number;
+  demoExpiresAt: string | null;
+};
+
+export type DemoWorkspaceSeedResult = {
+  projectsCreated: number;
+  applicantsCreated: number;
+  applicationsCreated: number;
+  expiresAt: string;
+};
+
+export type DemoWorkspaceCleanupResult = {
+  projectsDeleted: number;
+  usersDeleted: number;
+  applicationsDeleted: number;
 };
 
 export type RegisterInput = {

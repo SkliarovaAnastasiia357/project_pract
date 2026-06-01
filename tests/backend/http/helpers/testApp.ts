@@ -12,6 +12,8 @@ import { registerHealthRoutes } from "../../../../src/backend/http/routes/health
 import { registerProfileRoutes } from "../../../../src/backend/http/routes/profile.js";
 import { registerProjectRoutes } from "../../../../src/backend/http/routes/projects.js";
 import { registerApplicationRoutes } from "../../../../src/backend/http/routes/applications.js";
+import { registerDashboardRoute } from "../../../../src/backend/http/routes/dashboard.js";
+import { registerDemoRoutes } from "../../../../src/backend/http/routes/demo.js";
 import * as schema from "../../../../src/backend/db/schema.js";
 
 const SECRET = "x".repeat(48);
@@ -53,6 +55,8 @@ export async function createTestApp(): Promise<TestHarness> {
   await registerProfileRoutes(app);
   await registerProjectRoutes(app);
   await registerApplicationRoutes(app);
+  await registerDashboardRoute(app);
+  await registerDemoRoutes(app);
   return {
     app,
     pool,

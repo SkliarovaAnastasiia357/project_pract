@@ -6,6 +6,9 @@ import type {
   ApplicationDecisionInput,
   ApplicationInput,
   ApplicationStatus,
+  DashboardMetrics,
+  DemoWorkspaceCleanupResult,
+  DemoWorkspaceSeedResult,
   IncomingApplication,
   Profile,
   ProfileInput,
@@ -39,11 +42,20 @@ type SessionRecord = {
   userId: string;
 };
 
+type DemoRecord = {
+  ownerId: string;
+  expiresAt: string;
+  projectIds: string[];
+  userIds: string[];
+  applicationIds: string[];
+};
+
 type MockDatabase = {
   users: UserRecord[];
   projects: ProjectRecord[];
   applications: ApplicationRecord[];
   sessions: SessionRecord[];
+  demo: DemoRecord[];
 };
 
 const initialDatabase: MockDatabase = {
@@ -51,6 +63,7 @@ const initialDatabase: MockDatabase = {
   projects: [],
   applications: [],
   sessions: [],
+  demo: [],
 };
 
 function cloneDatabase(database: MockDatabase): MockDatabase {
@@ -60,12 +73,20 @@ function cloneDatabase(database: MockDatabase): MockDatabase {
 function readDatabase(): MockDatabase {
   const storedDatabase = readJson(MOCK_DB_KEY, initialDatabase) as Partial<MockDatabase>;
 
-  return cloneDatabase({
+  const database = cloneDatabase({
     users: storedDatabase.users ?? [],
     projects: storedDatabase.projects ?? [],
     applications: storedDatabase.applications ?? [],
     sessions: storedDatabase.sessions ?? [],
+    demo: storedDatabase.demo ?? [],
   });
+
+  const cleaned = cleanupExpiredDemoRecords(database);
+  if (cleaned.changed) {
+    writeDatabase(cleaned.database);
+  }
+
+  return cleaned.database;
 }
 
 function writeDatabase(database: MockDatabase): void {
@@ -224,6 +245,93 @@ function toIncomingApplication(database: MockDatabase, application: ApplicationR
       title: project.title,
     },
     applicant: toUserSearchResult(applicant),
+  };
+}
+
+function countUnique(values: string[]): number {
+  return new Set(values).size;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function cleanupDemoRecords(database: MockDatabase, ownerId: string): DemoWorkspaceCleanupResult {
+  const demoRecords = database.demo.filter((record) => record.ownerId === ownerId);
+  const projectIds = new Set(demoRecords.flatMap((record) => record.projectIds));
+  const userIds = new Set(demoRecords.flatMap((record) => record.userIds));
+  const applicationIds = new Set(demoRecords.flatMap((record) => record.applicationIds));
+  const applicationIdsForProjects = database.applications
+    .filter((application) => projectIds.has(application.projectId))
+    .map((application) => application.id);
+
+  for (const id of applicationIdsForProjects) {
+    applicationIds.add(id);
+  }
+
+  const result = {
+    projectsDeleted: countUnique([...projectIds].filter((id) => database.projects.some((project) => project.id === id))),
+    usersDeleted: countUnique([...userIds].filter((id) => database.users.some((user) => user.id === id))),
+    applicationsDeleted: countUnique(
+      [...applicationIds].filter((id) => database.applications.some((application) => application.id === id)),
+    ),
+  };
+
+  database.applications = database.applications.filter((application) => !applicationIds.has(application.id));
+  database.projects = database.projects.filter((project) => !projectIds.has(project.id));
+  database.users = database.users.filter((user) => !userIds.has(user.id));
+  database.sessions = database.sessions.filter((session) => !userIds.has(session.userId));
+  database.demo = database.demo.filter((record) => record.ownerId !== ownerId);
+
+  return result;
+}
+
+function cleanupExpiredDemoRecords(database: MockDatabase): { database: MockDatabase; changed: boolean } {
+  const now = Date.now();
+  const expiredOwnerIds = database.demo
+    .filter((record) => Date.parse(record.expiresAt) <= now)
+    .map((record) => record.ownerId);
+
+  if (expiredOwnerIds.length === 0) {
+    return { database, changed: false };
+  }
+
+  for (const ownerId of uniqueStrings(expiredOwnerIds)) {
+    cleanupDemoRecords(database, ownerId);
+  }
+
+  return { database, changed: true };
+}
+
+function createDemoUser(ownerId: string, suffix: string, name: string, bio: string, skills: string[]): UserRecord {
+  return {
+    id: createId(`demo-user-${suffix}`),
+    email: `demo+${ownerId.slice(0, 8)}-${suffix}@teamnova.local`,
+    name,
+    password: "DemoPass1",
+    bio,
+    skills: skills.map((skill) => ({ id: createId("demo-skill"), name: skill })),
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function getDashboardMetrics(database: MockDatabase, user: UserRecord): DashboardMetrics {
+  const ownedProjectIds = new Set(database.projects.filter((project) => project.userId === user.id).map((project) => project.id));
+  const incomingApplications = database.applications.filter((application) => ownedProjectIds.has(application.projectId));
+  const demoExpiresAt = database.demo
+    .filter((record) => record.ownerId === user.id)
+    .map((record) => record.expiresAt)
+    .sort()[0] ?? null;
+
+  return {
+    ownedProjectsCount: ownedProjectIds.size,
+    searchableProjectsCount: database.projects.length,
+    searchableUsersCount: Math.max(0, database.users.length - 1),
+    incomingApplicationsCount: incomingApplications.length,
+    pendingApplicationsCount: incomingApplications.filter((application) => application.status === "pending").length,
+    acceptedTeamMembersCount: incomingApplications.filter((application) => application.status === "accepted").length,
+    profileSkillsCount: user.skills.length,
+    demoExpiresAt,
   };
 }
 
@@ -470,6 +578,86 @@ export const mockApi: ApiClient = {
         matchesQuery([entry.name, entry.bio, ...entry.skills.map((skill) => skill.name)], input),
       )
       .map(toUserSearchResult);
+  },
+
+  async getDashboardMetrics(token): Promise<DashboardMetrics> {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    return getDashboardMetrics(database, user);
+  },
+
+  async seedDemoWorkspace(token): Promise<DemoWorkspaceSeedResult> {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    cleanupDemoRecords(database, user.id);
+
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const project: ProjectRecord = {
+      id: createId("demo-project"),
+      userId: user.id,
+      title: "Demo · AI подбор команды",
+      description: "Реальный демо-проект Teamnova: подбор участников, заявки и состав команды.",
+      stack: "React, TypeScript, Fastify, PostgreSQL",
+      roles: "Frontend developer, QA engineer, UX researcher",
+      updatedAt: new Date().toISOString(),
+    };
+    const demoUsers = [
+      createDemoUser(user.id, "react", "Алина React", "Frontend engineer: React, TypeScript, дизайн-системы.", [
+        "React",
+        "TypeScript",
+        "UI",
+      ]),
+      createDemoUser(user.id, "qa", "Максим QA", "QA engineer: тест-планы, регрессия, Playwright.", [
+        "QA",
+        "Playwright",
+        "Postman",
+      ]),
+      createDemoUser(user.id, "ux", "София UX", "UX researcher: CJM, прототипы, интервью пользователей.", [
+        "UX",
+        "Figma",
+        "Research",
+      ]),
+    ];
+    const statuses: ApplicationStatus[] = ["pending", "accepted", "rejected"];
+    const applications: ApplicationRecord[] = demoUsers.map((demoUser, index) => {
+      const now = new Date().toISOString();
+      return {
+        id: createId("demo-application"),
+        projectId: project.id,
+        applicantId: demoUser.id,
+        message: `Demo-заявка: ${demoUser.name} хочет присоединиться к проекту.`,
+        status: statuses[index]!,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
+
+    database.projects.push(project);
+    database.users.push(...demoUsers);
+    database.applications.push(...applications);
+    database.demo.push({
+      ownerId: user.id,
+      expiresAt,
+      projectIds: [project.id],
+      userIds: demoUsers.map((demoUser) => demoUser.id),
+      applicationIds: applications.map((application) => application.id),
+    });
+    writeDatabase(database);
+
+    return {
+      projectsCreated: 1,
+      applicantsCreated: demoUsers.length,
+      applicationsCreated: applications.length,
+      expiresAt,
+    };
+  },
+
+  async cleanupDemoWorkspace(token): Promise<DemoWorkspaceCleanupResult> {
+    await waitForMock();
+    const { database, user } = requireUserByToken(token);
+    const result = cleanupDemoRecords(database, user.id);
+    writeDatabase(database);
+    return result;
   },
 
   async applyToProject(token, projectId, input: ApplicationInput) {

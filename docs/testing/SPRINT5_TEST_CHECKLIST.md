@@ -1,6 +1,6 @@
 # Sprint 5 Final QA Checklist
 
-Дата: 2026-05-30
+Дата: 2026-06-01
 Период: 15.05.2026–28.05.2026
 
 ## Automated Gates
@@ -12,6 +12,9 @@
 - [x] `npm run build:backend`
 - [x] `npm run db:generate`
 - [x] GitHub Actions `test` passed на PR #9
+- [x] 2026-06-01: `npm run test:frontend` подтверждает match score и mock demo seed/cleanup.
+- [x] 2026-06-01: `npm run test:backend` подтверждает backend contract; локально 31 passed / 50 skipped из-за Docker/testcontainers caveat.
+- [x] 2026-06-01: `npm run build` и `npm run build:backend` проходят после dashboard/demo/matching изменений.
 
 ## Browser Smoke
 
@@ -22,6 +25,10 @@
 - [x] Полный MVP-цикл подтвержден frontend contract test `mvpCycle.test.ts`.
 - [x] Полный form-entry browser smoke пройден через Playwright дважды: desktop owner -> project CRUD -> member -> search -> application -> owner accept/reject и mobile owner -> project CRUD -> member -> search -> application -> owner accept/reject.
 - [x] Protected route refresh проверен для `/home`, `/profile`, `/search`, `/requests`, `/projects/new` и project edit route.
+- [x] `/home`: live dashboard показывает реальные счетчики из mock/API, а не статичные презентационные числа.
+- [x] `/home`: кнопка `Заполнить демо` создает реальные проект, кандидатов и заявки; `Очистить` удаляет демо-набор.
+- [x] `/search`: карточки проектов показывают объяснимый match score по профилю, проекту и запросу.
+- [x] `/requests`: принятие заявки добавляет участника в команду проекта.
 
 ## UI/UX Review
 
@@ -32,6 +39,7 @@
 - [x] Темный фиолетовый Teamnova UI восстановлен по старому макету.
 - [x] Desktop layout smoke для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
 - [x] Mobile layout smoke для `/login`, `/home`, `/profile`, `/projects/new`, project edit, `/search`, `/requests`.
+- [x] Judge-ready widgets проверены на desktop и mobile: live dashboard, demo controls, match panel, team strip. Mobile horizontal overflow: 0 / 0.
 
 ## Documentation
 

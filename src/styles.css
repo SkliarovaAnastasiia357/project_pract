@@ -695,6 +695,10 @@ li {
   gap: 14px;
 }
 
+.overview-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .overview-card {
   border-radius: 22px;
   padding: 18px;
@@ -704,9 +708,17 @@ li {
   gap: 8px;
 }
 
+.overview-card--metric {
+  min-height: 116px;
+  align-content: center;
+}
+
 .overview-card__title,
 .overview-card__caption,
 .completion-meter__label,
+.demo-expiry,
+.match-score__reasons,
+.team-strip__title,
 .project-card__confirm p {
   margin: 0;
 }
@@ -714,6 +726,11 @@ li {
 .overview-card__title {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.1rem;
+}
+
+.overview-card--metric .overview-card__title {
+  font-size: clamp(1.6rem, 4vw, 2.35rem);
+  line-height: 1;
 }
 
 .overview-card__caption {
@@ -770,6 +787,15 @@ li {
 
 .sidebar-card--accent {
   background: linear-gradient(180deg, rgba(164, 92, 255, 0.18), rgba(255, 255, 255, 0.03));
+}
+
+.demo-expiry {
+  border-radius: 14px;
+  border: 1px solid rgba(164, 92, 255, 0.28);
+  background: rgba(164, 92, 255, 0.08);
+  color: var(--text) !important;
+  padding: 10px 12px;
+  font-size: 0.92rem;
 }
 
 .inline-form {
@@ -833,6 +859,46 @@ li {
 .status-pill--rejected {
   color: #ffc0d0;
   background: rgba(255, 127, 159, 0.14);
+}
+
+.match-panel,
+.team-strip {
+  display: grid;
+  gap: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(164, 92, 255, 0.24);
+  background: rgba(164, 92, 255, 0.07);
+  padding: 14px;
+}
+
+.match-score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.match-score__value {
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.match-score__reasons {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.team-strip__title {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .project-card__confirm {

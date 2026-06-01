@@ -76,7 +76,10 @@ export function RequestsPage() {
           application.id === applicationId ? { ...application, status: decision.status, updatedAt: decision.updatedAt } : application,
         ),
       );
-      setNotice({ tone: "success", message: status === "accepted" ? "Заявка принята." : "Заявка отклонена." });
+      setNotice({
+        tone: "success",
+        message: status === "accepted" ? "Заявка принята. Участник добавлен в команду проекта." : "Заявка отклонена.",
+      });
     } catch (error) {
       setNotice({
         tone: "error",
@@ -160,6 +163,17 @@ export function RequestsPage() {
                         </li>
                       ))}
                     </ul>
+                  ) : null}
+
+                  {application.status === "accepted" ? (
+                    <div className="team-strip">
+                      <p className="team-strip__title">В команде проекта</p>
+                      <ul className="tag-list">
+                        <li className="tag-list__item">
+                          <span>{application.applicant.name}</span>
+                        </li>
+                      </ul>
+                    </div>
                   ) : null}
 
                   <div className="project-card__actions">

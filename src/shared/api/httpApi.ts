@@ -2,6 +2,9 @@ import type {
   AuthSession,
   ApplicationDecisionInput,
   ApplicationInput,
+  DashboardMetrics,
+  DemoWorkspaceCleanupResult,
+  DemoWorkspaceSeedResult,
   IncomingApplication,
   LoginInput,
   Profile,
@@ -150,6 +153,18 @@ export const httpApi: ApiClient = {
   searchUsers(_token: string, input: SearchInput): Promise<UserSearchResult[]> {
     const params = new URLSearchParams({ q: input.query });
     return request<UserSearchResult[]>(`/api/search/users?${params.toString()}`, "GET");
+  },
+
+  getDashboardMetrics(_token: string): Promise<DashboardMetrics> {
+    return request<DashboardMetrics>("/api/dashboard", "GET");
+  },
+
+  seedDemoWorkspace(_token: string): Promise<DemoWorkspaceSeedResult> {
+    return request<DemoWorkspaceSeedResult>("/api/demo/seed", "POST");
+  },
+
+  cleanupDemoWorkspace(_token: string): Promise<DemoWorkspaceCleanupResult> {
+    return request<DemoWorkspaceCleanupResult>("/api/demo", "DELETE");
   },
 
   applyToProject(_token: string, projectId: string, input: ApplicationInput): Promise<ProjectApplication> {
