@@ -4,6 +4,9 @@ import type {
   ApplicationDecisionInput,
   ApplicationInput,
   LoginInput,
+  DashboardMetrics,
+  DemoWorkspaceCleanupResult,
+  DemoWorkspaceSeedResult,
   IncomingApplication,
   Profile,
   ProfileInput,
@@ -49,6 +52,9 @@ export interface ApiClient {
   deleteProject(token: string, projectId: string): Promise<void>;
   searchProjects(token: string, input: SearchInput): Promise<ProjectSearchResult[]>;
   searchUsers(token: string, input: SearchInput): Promise<UserSearchResult[]>;
+  getDashboardMetrics(token: string): Promise<DashboardMetrics>;
+  seedDemoWorkspace(token: string): Promise<DemoWorkspaceSeedResult>;
+  cleanupDemoWorkspace(token: string): Promise<DemoWorkspaceCleanupResult>;
   applyToProject(token: string, projectId: string, input: ApplicationInput): Promise<ProjectApplication>;
   listIncomingApplications(token: string): Promise<IncomingApplication[]>;
   decideApplication(token: string, applicationId: string, input: ApplicationDecisionInput): Promise<ProjectApplication>;

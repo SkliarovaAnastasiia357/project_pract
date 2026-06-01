@@ -1,6 +1,6 @@
 # Teamnova Sprint 5 Test Plan
 
-Дата: 2026-05-30
+Дата: 2026-06-01
 
 ## Frontend Contract Tests
 
@@ -10,9 +10,11 @@ Commands:
 
 Coverage targets:
 - `mockApi` supports registration, login, profile, project CRUD, search, applications and session restore.
+- `mockApi` supports judge demo seed/cleanup with real stored projects, users and applications.
+- `match-score` calculates deterministic explanations from profile skills, project stack/roles and search query.
 - `httpApi` maps frontend methods to the expected REST endpoints and refresh flow.
 - Route list includes all MVP protected and public routes.
-- Home task board reflects Sprint 5 finalization state.
+- Home dashboard reflects real workspace metrics and never uses hardcoded presentation numbers.
 - Existing Sprint 3 and Sprint 4 checklist tests remain green.
 
 Negative cases:
@@ -33,6 +35,8 @@ Coverage targets:
 - Project CRUD enforces ownership.
 - Search endpoints return projects/users by keyword and skills.
 - Application endpoints enforce duplicate and owner permission rules.
+- Dashboard endpoint returns real counts for owned projects, searchable users/projects, incoming applications, pending applications, accepted team members and profile skills.
+- Demo endpoints create real database rows and remove only the current owner's demo workspace on explicit cleanup or TTL cleanup.
 
 Infrastructure note:
 - Backend integration suites use testcontainers and require a local Docker/container runtime.
@@ -50,9 +54,12 @@ Scenarios:
 4. Create a project with stack `React, TypeScript`.
 5. Register/login participant, add skill `React`, search project, send application.
 6. Login as owner, open incoming requests, accept or reject application.
-7. Inspect `/home`, `/profile`, `/projects/new`, `/search`, `/requests` for Sprint 5 copy and obvious layout issues.
-8. Inspect the same routes in the dark purple Teamnova design on desktop and mobile viewports.
-9. Confirm task board columns wrap instead of clipping inside the workspace layout.
+7. On `/home`, run `Заполнить демо`, verify the live dashboard changes, then run `Очистить` and verify demo rows disappear.
+8. On `/search`, run a `React` or `frontend` query and verify match score explanations mention real skills/roles/query fields.
+9. On `/requests`, accept a candidate and verify the participant appears as a team member.
+10. Inspect `/home`, `/profile`, `/projects/new`, `/search`, `/requests` for product-facing copy and obvious layout issues.
+11. Inspect the same routes in the dark purple Teamnova design on desktop and mobile viewports.
+12. Confirm the `/home` project list is the primary content and cards wrap instead of clipping inside the workspace layout.
 
 ## Documentation Checks
 
@@ -64,6 +71,8 @@ Pass criteria:
 - Commands in documentation match `package.json`.
 - Public routes and API routes match the current code.
 - Sprint 5 dates and scope are represented consistently.
+- Docs explicitly state that dashboard counts and match scores are derived from real app data.
+- Demo data cleanup behavior is documented with TTL/manual cleanup caveats.
 - Deployment limitations are explicit when external DNS/hosting cannot be verified locally.
 - Status docs do not describe obsolete draft PR / pre-merge work as current.
 

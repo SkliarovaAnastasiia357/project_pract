@@ -2,6 +2,9 @@ import type {
   AuthSession,
   ApplicationDecisionInput,
   ApplicationInput,
+  DashboardMetrics,
+  DemoWorkspaceCleanupResult,
+  DemoWorkspaceSeedResult,
   IncomingApplication,
   LoginInput,
   Profile,
@@ -30,13 +33,15 @@ async function rawRequest(
   body?: JsonPayload,
   authToken?: string | null,
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...(body ? { "Content-Type": "application/json" } : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
+
   return fetch(`${API_BASE_URL}${path}`, {
     method,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 }
@@ -150,6 +155,18 @@ export const httpApi: ApiClient = {
   searchUsers(_token: string, input: SearchInput): Promise<UserSearchResult[]> {
     const params = new URLSearchParams({ q: input.query });
     return request<UserSearchResult[]>(`/api/search/users?${params.toString()}`, "GET");
+  },
+
+  getDashboardMetrics(_token: string): Promise<DashboardMetrics> {
+    return request<DashboardMetrics>("/api/dashboard", "GET");
+  },
+
+  seedDemoWorkspace(_token: string): Promise<DemoWorkspaceSeedResult> {
+    return request<DemoWorkspaceSeedResult>("/api/demo/seed", "POST");
+  },
+
+  cleanupDemoWorkspace(_token: string): Promise<DemoWorkspaceCleanupResult> {
+    return request<DemoWorkspaceCleanupResult>("/api/demo", "DELETE");
   },
 
   applyToProject(_token: string, projectId: string, input: ApplicationInput): Promise<ProjectApplication> {

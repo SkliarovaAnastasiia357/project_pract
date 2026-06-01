@@ -11,7 +11,10 @@ import { registerHealthRoutes } from "./http/routes/health.js";
 import { registerProfileRoutes } from "./http/routes/profile.js";
 import { registerProjectRoutes } from "./http/routes/projects.js";
 import { registerApplicationRoutes } from "./http/routes/applications.js";
+import { registerDashboardRoute } from "./http/routes/dashboard.js";
+import { registerDemoRoutes } from "./http/routes/demo.js";
 import { startCleanupJob } from "./auth/sessions-cleanup.js";
+import { startDemoCleanupJob } from "./demo/demo-data.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder =
@@ -33,10 +36,18 @@ async function main(): Promise<void> {
   await registerProfileRoutes(app);
   await registerProjectRoutes(app);
   await registerApplicationRoutes(app);
+  await registerDashboardRoute(app);
+  await registerDemoRoutes(app);
 
   const stopCleanup = startCleanupJob({
     db: dbHandle.db,
     intervalMs: 24 * 60 * 60 * 1000,
+    logger: { info: (o) => app.log.info(o), error: (o) => app.log.error(o) },
+  });
+  const stopDemoCleanup = startDemoCleanupJob({
+    db: dbHandle.db,
+    redis: redisHandle.client,
+    intervalMs: 15 * 60 * 1000,
     logger: { info: (o) => app.log.info(o), error: (o) => app.log.error(o) },
   });
 
@@ -46,6 +57,7 @@ async function main(): Promise<void> {
     closing = true;
     app.log.info({ signal }, "shutting down");
     stopCleanup();
+    stopDemoCleanup();
     try {
       await app.close();
     } catch (err) {

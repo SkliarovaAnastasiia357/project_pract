@@ -40,7 +40,7 @@ services:
       DATABASE_URL: postgres://teamnova:${POSTGRES_PASSWORD}@postgres:5432/teamnova
       REDIS_URL: redis://redis:6379
       AUTH_ACCESS_SECRET: ${AUTH_ACCESS_SECRET:?required}
-      COOKIE_SECURE: "false"
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       LOG_LEVEL: info
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
 

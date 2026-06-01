@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 
 import { AppShell } from "../app/AppShell.tsx";
 import { useAuth } from "../app/providers/AuthProvider.tsx";
+import { scoreProjectMatch } from "../features/matching/match-score.ts";
 import { apiClient } from "../shared/api/index.ts";
 import { ApiClientError } from "../shared/api/contracts.ts";
 import { EmptyState } from "../shared/components/EmptyState.tsx";
 import { FieldShell } from "../shared/components/FieldShell.tsx";
 import { LoadingBlock } from "../shared/components/LoadingBlock.tsx";
 import { StatusBanner } from "../shared/components/StatusBanner.tsx";
-import type { ApplicationStatus, ProjectSearchResult, UserSearchResult } from "../shared/types.ts";
+import type { ApplicationStatus, Profile, ProjectSearchResult, UserSearchResult } from "../shared/types.ts";
 
 const applicationLabels: Record<ApplicationStatus, string> = {
   pending: "Заявка на рассмотрении",
@@ -20,6 +21,8 @@ const applicationLabels: Record<ApplicationStatus, string> = {
 export function SearchPage() {
   const { session } = useAuth();
   const [query, setQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [projectResults, setProjectResults] = useState<ProjectSearchResult[]>([]);
   const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +38,15 @@ export function SearchPage() {
     setNotice(null);
 
     try {
-      const [projects, users] = await Promise.all([
+      const [projects, users, nextProfile] = await Promise.all([
         apiClient.searchProjects(session.token, { query: nextQuery }),
         apiClient.searchUsers(session.token, { query: nextQuery }),
+        apiClient.getProfile(session.token),
       ]);
       setProjectResults(projects);
       setUserResults(users);
+      setProfile(nextProfile);
+      setActiveQuery(nextQuery);
     } catch (error) {
       setNotice({
         tone: "error",
@@ -159,6 +165,13 @@ export function SearchPage() {
                 <div className="project-grid">
                   {projectResults.map((project) => {
                     const isOwnProject = project.ownerId === session?.user.id;
+                    const match =
+                      project.match ??
+                      scoreProjectMatch({
+                        profileSkills: profile?.skills.map((skill) => skill.name) ?? [],
+                        query: activeQuery,
+                        project,
+                      });
                     return (
                       <article className="project-card" key={project.id}>
                         <div className="project-card__header">
@@ -173,6 +186,17 @@ export function SearchPage() {
                           ) : null}
                         </div>
                         <p className="project-card__description">{project.description}</p>
+                        <div className="match-panel" aria-label={`Совпадение ${match.score}%`}>
+                          <div className="match-score">
+                            <span className="match-score__value">{match.score}%</span>
+                            <span>совпадение</span>
+                          </div>
+                          <ul className="match-score__reasons">
+                            {match.reasons.map((reason) => (
+                              <li key={reason}>{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
                         <dl className="project-card__meta">
                           <div>
                             <dt>Теги / стек</dt>

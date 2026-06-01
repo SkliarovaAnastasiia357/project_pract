@@ -2,7 +2,7 @@ import { runAppRoutesTests } from "./appRoutes.test.ts";
 import { runHttpApiTests } from "./httpApi.test.ts";
 import { runMockApiTests } from "./mockApi.test.ts";
 import { runMvpCycleTests } from "./mvpCycle.test.ts";
-import { runProjectBoardTests } from "./projectBoard.test.ts";
+import { runMatchScoreTests } from "./matchScore.test.ts";
 import { runProfileChecklistTests } from "./profileChecklist.test.ts";
 import { runProjectsChecklistTests } from "./projectsChecklist.test.ts";
 import { runSprint3RegressionTests } from "./sprint3Regression.test.ts";
@@ -12,7 +12,7 @@ try {
   await runAppRoutesTests();
   await runMockApiTests();
   await runMvpCycleTests();
-  await runProjectBoardTests();
+  runMatchScoreTests();
   await runProfileChecklistTests();
   await runProjectsChecklistTests();
   await runSprint3RegressionTests();

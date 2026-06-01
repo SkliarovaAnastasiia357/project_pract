@@ -78,17 +78,17 @@ export function RegisterPage() {
 
   return (
     <AuthSplitLayout
-      eyebrow="Teamnova · финальный MVP"
-      title="Создайте аккаунт и соберите свой профиль"
-      description="Регистрация сразу открывает доступ к защищенным маршрутам, профилю и проектам. После создания аккаунта вы автоматически войдете в рабочую зону."
+      eyebrow="Teamnova · подбор команды"
+      title="Зарегистрируйтесь в Teamnova"
+      description="Teamnova помогает собрать команду под проект: создайте профиль, укажите навыки, опубликуйте идею или найдите подходящую команду через поиск и заявки."
       helperLabel="Войти"
       helperPath="/login"
       helperText="Уже есть аккаунт?"
     >
       <div className="form-surface__header">
         <p className="form-surface__eyebrow">Регистрация</p>
-        <h2>Новый аккаунт</h2>
-        <p>Используйте рабочий email и задайте пароль не короче шести символов.</p>
+        <h2>Создать аккаунт</h2>
+        <p>Укажите имя, email и пароль. После регистрации вы сразу попадете на страницу проектов.</p>
       </div>
 
       {submitError ? <StatusBanner tone="error" title="Ошибка регистрации" message={submitError} /> : null}

@@ -5,7 +5,7 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install --prefer-offline --no-audit --no-fund
-COPY tsconfig.json vite.config.ts* ./
+COPY tsconfig.json ./
 COPY index.html ./
 COPY src ./src
 # Same-origin: no VITE_API_BASE_URL needed — nginx proxies /api to the api service.
