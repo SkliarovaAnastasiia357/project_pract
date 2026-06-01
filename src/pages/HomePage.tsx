@@ -4,9 +4,9 @@ import { Link, useLocation } from "react-router-dom";
 import { AppShell } from "../app/AppShell.tsx";
 import { useAuth } from "../app/providers/AuthProvider.tsx";
 import { getWorkspaceSummary } from "../features/profile/workspace-summary.ts";
-import { buildHomeTaskBoard } from "../features/projects/project-board.ts";
 import { apiClient } from "../shared/api/index.ts";
 import { ApiClientError } from "../shared/api/contracts.ts";
+import { EmptyState } from "../shared/components/EmptyState.tsx";
 import { LoadingBlock } from "../shared/components/LoadingBlock.tsx";
 import { StatusBanner } from "../shared/components/StatusBanner.tsx";
 import type { DashboardMetrics, IncomingApplication, Profile, Project } from "../shared/types.ts";
@@ -38,7 +38,6 @@ export function HomePage() {
     skillsCount: profile?.skills.length ?? 0,
     projectsCount: projects.length,
   });
-  const boardColumns = buildHomeTaskBoard();
   const acceptedTeamByProject = incomingApplications
     .filter((application) => application.status === "accepted")
     .reduce<Map<string, IncomingApplication[]>>((groups, application) => {
@@ -172,8 +171,8 @@ export function HomePage() {
 
   return (
     <AppShell
-      title="Финальная подготовка"
-      description="Спринт 5: комплексное тестирование, багфиксы, UI/UX, деплой, документация и презентация. Даты: 15 мая 2026 — 28 мая 2026."
+      title="Мои проекты"
+      description="Управляйте опубликованными проектами, смотрите состав команды и быстро переходите к созданию новой идеи."
       actions={
         <Link className="primary-button primary-button--compact" to="/projects/new">
           Создать проект
@@ -245,81 +244,17 @@ export function HomePage() {
         {notice ? <StatusBanner message={notice.message} title={notice.title} tone={notice.tone} /> : null}
         {error ? <StatusBanner message={error} title="Проблема при загрузке" tone="error" /> : null}
 
-        <section aria-label="Live dashboard" className="overview-grid overview-grid--four">
-          <article className="overview-card overview-card--metric">
-            <p className="overview-card__title">{metrics?.searchableProjectsCount ?? 0}</p>
-            <p className="overview-card__caption">проектов в поиске</p>
-          </article>
-          <article className="overview-card overview-card--metric">
-            <p className="overview-card__title">{metrics?.searchableUsersCount ?? 0}</p>
-            <p className="overview-card__caption">участников в базе</p>
-          </article>
-          <article className="overview-card overview-card--metric">
-            <p className="overview-card__title">{metrics?.pendingApplicationsCount ?? 0}</p>
-            <p className="overview-card__caption">заявок ждут решения</p>
-          </article>
-          <article className="overview-card overview-card--metric">
-            <p className="overview-card__title">{metrics?.acceptedTeamMembersCount ?? 0}</p>
-            <p className="overview-card__caption">участников принято</p>
-          </article>
-        </section>
-
-        <section className="panel task-board-panel">
+        <section className="panel">
           <div className="panel__header">
             <div>
-              <p className="panel__eyebrow">Доска задач</p>
-              <h2>Спринт 5: финальная версия</h2>
+              <p className="panel__eyebrow">Проекты</p>
+              <h2>Список ваших проектов</h2>
             </div>
           </div>
 
           {loading ? (
-            <LoadingBlock label="Загружаем доску задач…" />
-          ) : (
-            <div className="task-board" aria-label="Доска задач проекта">
-              {boardColumns.map((column) => (
-                <section className={`task-column task-column--${column.accent}`} key={column.id}>
-                  <h3>{column.title}</h3>
-                  <div className="task-column__cards">
-                    {column.tasks.map((task) => (
-                      <article className="task-card" key={task.id}>
-                        <div className="task-card__body">
-                          <h4>{task.title}</h4>
-                          <p>{task.description}</p>
-                        </div>
-
-                        <div className="task-card__footer">
-                          <span className="task-card__date">{task.dateLabel}</span>
-                          <span className={`task-card__avatar task-card__avatar--${task.tone}`}>{task.assignee}</span>
-                        </div>
-
-                      </article>
-                    ))}
-                  </div>
-
-                </section>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section aria-label="Сводка рабочей зоны" className="overview-grid">
-          {summary.cards.map((card) => (
-            <article className="overview-card" key={card.title}>
-              <p className="overview-card__title">{card.title}</p>
-              <p className="overview-card__caption">{card.caption}</p>
-            </article>
-          ))}
-        </section>
-
-        {projects.length > 0 ? (
-          <section className="panel">
-            <div className="panel__header">
-              <div>
-                <p className="panel__eyebrow">Карточки проектов</p>
-                <h2>Детали проектов</h2>
-              </div>
-            </div>
-
+            <LoadingBlock label="Загружаем проекты…" />
+          ) : projects.length > 0 ? (
             <div className="project-grid">
               {projects.map((project) => (
                 <article className="project-card" key={project.id}>
@@ -394,8 +329,37 @@ export function HomePage() {
                 </article>
               ))}
             </div>
-          </section>
-        ) : null}
+          ) : (
+            <EmptyState
+              title="Пока нет проектов"
+              description="Создайте первый проект, чтобы участники могли найти его в поиске и отправить заявку в команду."
+              action={
+                <Link className="primary-button primary-button--compact" to="/projects/new">
+                  Создать проект
+                </Link>
+              }
+            />
+          )}
+        </section>
+
+        <section aria-label="Live dashboard" className="overview-grid overview-grid--four">
+          <article className="overview-card overview-card--metric">
+            <p className="overview-card__title">{metrics?.searchableProjectsCount ?? 0}</p>
+            <p className="overview-card__caption">проектов в поиске</p>
+          </article>
+          <article className="overview-card overview-card--metric">
+            <p className="overview-card__title">{metrics?.searchableUsersCount ?? 0}</p>
+            <p className="overview-card__caption">участников в базе</p>
+          </article>
+          <article className="overview-card overview-card--metric">
+            <p className="overview-card__title">{metrics?.pendingApplicationsCount ?? 0}</p>
+            <p className="overview-card__caption">заявок ждут решения</p>
+          </article>
+          <article className="overview-card overview-card--metric">
+            <p className="overview-card__title">{metrics?.acceptedTeamMembersCount ?? 0}</p>
+            <p className="overview-card__caption">участников принято</p>
+          </article>
+        </section>
       </div>
     </AppShell>
   );

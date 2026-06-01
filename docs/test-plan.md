@@ -57,9 +57,9 @@ Scenarios:
 7. On `/home`, run `Заполнить демо`, verify the live dashboard changes, then run `Очистить` and verify demo rows disappear.
 8. On `/search`, run a `React` or `frontend` query and verify match score explanations mention real skills/roles/query fields.
 9. On `/requests`, accept a candidate and verify the participant appears as a team member.
-10. Inspect `/home`, `/profile`, `/projects/new`, `/search`, `/requests` for Sprint 5 copy and obvious layout issues.
+10. Inspect `/home`, `/profile`, `/projects/new`, `/search`, `/requests` for product-facing copy and obvious layout issues.
 11. Inspect the same routes in the dark purple Teamnova design on desktop and mobile viewports.
-12. Confirm task board columns wrap instead of clipping inside the workspace layout.
+12. Confirm the `/home` project list is the primary content and cards wrap instead of clipping inside the workspace layout.
 
 ## Documentation Checks
 

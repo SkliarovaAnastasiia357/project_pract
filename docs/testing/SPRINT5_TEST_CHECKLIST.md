@@ -21,7 +21,7 @@
 - [x] Mock frontend поднят через Vite.
 - [x] Регистрация открывает `/home`.
 - [x] Прямой переход на `/projects/new` восстанавливает mock-сессию и не возвращает на `/login`.
-- [x] `/home` показывает Спринт 5 и финальную доску задач.
+- [x] `/home` показывает список проектов пользователя, а не внутреннюю доску задач проекта Teamnova.
 - [x] Полный MVP-цикл подтвержден frontend contract test `mvpCycle.test.ts`.
 - [x] Полный form-entry browser smoke пройден через Playwright дважды: desktop owner -> project CRUD -> member -> search -> application -> owner accept/reject и mobile owner -> project CRUD -> member -> search -> application -> owner accept/reject.
 - [x] Protected route refresh проверен для `/home`, `/profile`, `/search`, `/requests`, `/projects/new` и project edit route.
@@ -32,7 +32,7 @@
 
 ## UI/UX Review
 
-- [x] Главная страница обновлена под финальный Спринт 5.
+- [x] Главная страница обновлена под пользовательский сценарий управления проектами.
 - [x] Старые подписи `Показ 4`, `Profile bio`, `Skills`, `Applications` убраны из пользовательских экранов.
 - [x] Форма проекта описана пользовательским языком, без технического упора на mock/backend contract.
 - [x] Быстрый desktop smoke для `/home` и `/projects/new`.
@@ -47,7 +47,7 @@
 - [x] `docs/status.md` фиксирует QA baseline, баг и ограничения хостинга.
 - [x] `docs/test-plan.md` описывает финальные gates.
 - [x] `docs/README.md` обновлен под финальную версию.
-- [x] `docs/testing/test-cases.md` обновлен с учетом session restore и Sprint 5 board.
+- [x] `docs/testing/test-cases.md` обновлен с учетом session restore и главной страницы со списком проектов.
 - [x] Финальная презентация доведена до 10-15 слайдов и проверена через PPTX integrity.
 
 ## Release / Hosting

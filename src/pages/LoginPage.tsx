@@ -76,9 +76,9 @@ export function LoginPage() {
 
   return (
     <AuthSplitLayout
-      eyebrow="Teamnova · финальный MVP"
+      eyebrow="Teamnova · подбор команды"
       title="Войдите в рабочую среду Teamnova"
-      description="Используйте аккаунт, чтобы открыть профиль, навыки и проекты. Состояние сессии сохраняется локально и сразу защищает маршруты приложения."
+      description="Используйте аккаунт, чтобы открыть свои проекты, профиль, поиск участников и входящие заявки."
       helperLabel="Создать аккаунт"
       helperPath="/register"
       helperText="Еще нет профиля?"

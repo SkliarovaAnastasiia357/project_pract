@@ -3,7 +3,6 @@ import { runHttpApiTests } from "./httpApi.test.ts";
 import { runMockApiTests } from "./mockApi.test.ts";
 import { runMvpCycleTests } from "./mvpCycle.test.ts";
 import { runMatchScoreTests } from "./matchScore.test.ts";
-import { runProjectBoardTests } from "./projectBoard.test.ts";
 import { runProfileChecklistTests } from "./profileChecklist.test.ts";
 import { runProjectsChecklistTests } from "./projectsChecklist.test.ts";
 import { runSprint3RegressionTests } from "./sprint3Regression.test.ts";
@@ -14,7 +13,6 @@ try {
   await runMockApiTests();
   await runMvpCycleTests();
   runMatchScoreTests();
-  await runProjectBoardTests();
   await runProfileChecklistTests();
   await runProjectsChecklistTests();
   await runSprint3RegressionTests();
