@@ -96,7 +96,32 @@ export async function runHttpApiTests(): Promise<void> {
     "register не должен вызывать /refresh",
   );
 
-  // Test 4: Sprint 4 endpoints use expected REST contract
+  // Test 4: body-less mutations must not send application/json with an empty body
+  authClient.setSession({ token: "mvp-token", user: { id: "u", email: "a@example.com", name: "A", bio: "" } });
+  const callsNoBody = installFetch((call) => {
+    if (call.url.endsWith("/api/projects/project-1")) return { status: 204 };
+    if (call.url.endsWith("/api/demo")) {
+      return { status: 200, body: { projectsDeleted: 1, usersDeleted: 3, applicationsDeleted: 3 } };
+    }
+    if (call.url.endsWith("/api/logout")) return { status: 204 };
+    return { status: 500 };
+  });
+
+  await httpApi.deleteProject("mvp-token", "project-1");
+  await httpApi.cleanupDemoWorkspace("mvp-token");
+  await httpApi.logout("mvp-token");
+
+  assert.deepEqual(
+    callsNoBody.map((call) => [call.method, call.url, call.headers["Content-Type"], call.body]),
+    [
+      ["DELETE", "/api/projects/project-1", undefined, undefined],
+      ["DELETE", "/api/demo", undefined, undefined],
+      ["POST", "/api/logout", undefined, undefined],
+    ],
+    "запросы без тела не должны отправлять Content-Type: application/json",
+  );
+
+  // Test 5: Sprint 4 endpoints use expected REST contract
   authClient.setSession({ token: "mvp-token", user: { id: "u", email: "a@example.com", name: "A", bio: "" } });
   const calls4 = installFetch((call) => {
     if (call.url.endsWith("/api/search/projects?q=React")) return { status: 200, body: [] };
@@ -156,9 +181,19 @@ export async function runHttpApiTests(): Promise<void> {
     "applyToProject должен отправлять сообщение заявки",
   );
   assert.equal(
+    calls4[2]!.headers["Content-Type"],
+    "application/json",
+    "applyToProject должен отправлять JSON Content-Type при наличии тела",
+  );
+  assert.equal(
     calls4[4]!.body,
     JSON.stringify({ status: "rejected" }),
     "decideApplication должен отправлять выбранный статус",
+  );
+  assert.equal(
+    calls4[4]!.headers["Content-Type"],
+    "application/json",
+    "decideApplication должен отправлять JSON Content-Type при наличии тела",
   );
   assert.equal(rejected.status, "rejected", "decideApplication должен возвращать статус решения");
 }

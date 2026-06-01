@@ -33,13 +33,15 @@ async function rawRequest(
   body?: JsonPayload,
   authToken?: string | null,
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...(body ? { "Content-Type": "application/json" } : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
+
   return fetch(`${API_BASE_URL}${path}`, {
     method,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 }
