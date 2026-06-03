@@ -1,3 +1,5 @@
+import teamnovaLogoUrl from "../../assets/teamnova-logo.svg";
+
 type BrandMarkProps = {
   caption?: string;
 };
@@ -5,7 +7,7 @@ type BrandMarkProps = {
 export function BrandMark({ caption }: BrandMarkProps) {
   return (
     <div className="brand-lockup">
-      <span className="brand-mark" aria-hidden="true" />
+      <img alt="" aria-hidden="true" className="brand-mark" src={teamnovaLogoUrl} />
       <div>
         <p className="brand-name">TEAMNOVA</p>
         {caption ? <p className="brand-caption">{caption}</p> : null}

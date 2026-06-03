@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { ReactNode, UIEvent } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 import { buildNavigationMenu } from "../shared/navigation.ts";
@@ -13,13 +14,34 @@ type AppShellProps = {
   children: ReactNode;
 };
 
+const navigationScrollStorageKey = "teamnova.navigation-scroll-left";
+
 export function AppShell({ title, description, actions, aside, children }: AppShellProps) {
   const location = useLocation();
+  const navigationRef = useRef<HTMLElement | null>(null);
   const { logout, session } = useAuth();
   const navigation = buildNavigationMenu(location.pathname);
+  const isProfilePage = location.pathname === "/profile";
+
+  useLayoutEffect(() => {
+    const navigationElement = navigationRef.current;
+
+    if (!navigationElement) {
+      return;
+    }
+
+    const storedScrollLeft = window.sessionStorage.getItem(navigationScrollStorageKey);
+    if (storedScrollLeft) {
+      navigationElement.scrollLeft = Number(storedScrollLeft);
+    }
+  }, [location.pathname]);
 
   async function handleLogout() {
     await logout();
+  }
+
+  function handleNavigationScroll(event: UIEvent<HTMLElement>) {
+    window.sessionStorage.setItem(navigationScrollStorageKey, String(event.currentTarget.scrollLeft));
   }
 
   return (
@@ -27,7 +49,12 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
       <aside className="workspace-shell__sidebar">
         <BrandMark caption="проектная платформа" />
 
-        <nav className="workspace-shell__nav" aria-label="Основная навигация">
+        <nav
+          className="workspace-shell__nav"
+          aria-label="Основная навигация"
+          onScroll={handleNavigationScroll}
+          ref={navigationRef}
+        >
           {navigation.map((item) =>
             item.kind === "action" ? (
               <button className="workspace-shell__nav-button" key={item.label} onClick={handleLogout} type="button">
@@ -64,9 +91,11 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
 
           <div className="workspace-shell__actions">
             {actions}
-            <Link className="ghost-button" to="/profile">
-              Открыть профиль
-            </Link>
+            {!isProfilePage ? (
+              <Link className="ghost-button" to="/profile">
+                Открыть профиль
+              </Link>
+            ) : null}
           </div>
         </section>
 

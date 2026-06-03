@@ -10,7 +10,7 @@ import { EmptyState } from "../shared/components/EmptyState.tsx";
 import { FieldShell } from "../shared/components/FieldShell.tsx";
 import { LoadingBlock } from "../shared/components/LoadingBlock.tsx";
 import { StatusBanner } from "../shared/components/StatusBanner.tsx";
-import type { ApplicationStatus, Profile, ProjectSearchResult, UserSearchResult } from "../shared/types.ts";
+import type { ApplicationStatus, ProjectSearchResult, UserSearchResult } from "../shared/types.ts";
 
 const applicationLabels: Record<ApplicationStatus, string> = {
   pending: "Заявка на рассмотрении",
@@ -22,7 +22,6 @@ export function SearchPage() {
   const { session } = useAuth();
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [projectResults, setProjectResults] = useState<ProjectSearchResult[]>([]);
   const [userResults, setUserResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,15 +37,13 @@ export function SearchPage() {
     setNotice(null);
 
     try {
-      const [projects, users, nextProfile] = await Promise.all([
+      const [projects, users] = await Promise.all([
         apiClient.searchProjects(session.token, { query: nextQuery }),
         apiClient.searchUsers(session.token, { query: nextQuery }),
-        apiClient.getProfile(session.token),
       ]);
+      setActiveQuery(nextQuery.trim());
       setProjectResults(projects);
       setUserResults(users);
-      setProfile(nextProfile);
-      setActiveQuery(nextQuery);
     } catch (error) {
       setNotice({
         tone: "error",
@@ -98,7 +95,7 @@ export function SearchPage() {
   return (
     <AppShell
       title="Поиск команд и участников"
-      description="Ищите проекты по тегам стека и ключевым словам, а участников — по навыкам и описанию профиля."
+      description="Ищите проекты и участников по ключевым словам. Процент совпадения у проектов считается только по ролям и стеку."
       actions={
         <Link className="primary-button primary-button--compact" to="/requests">
           Входящие заявки
@@ -120,9 +117,9 @@ export function SearchPage() {
             </dl>
           </article>
           <article className="sidebar-card sidebar-card--accent">
-            <p className="sidebar-card__eyebrow">Сценарий защиты</p>
-            <h3>Полный MVP-цикл</h3>
-            <p>Создатель публикует проект, участник находит его через поиск и отправляет заявку.</p>
+            <p className="sidebar-card__eyebrow">Правило мэтчинга</p>
+            <h3>Роли и стек</h3>
+            <p>Название и описание помогают найти проект, но процент считается только по совпавшим ролям и технологиям.</p>
           </article>
         </div>
       }
@@ -168,7 +165,7 @@ export function SearchPage() {
                     const match =
                       project.match ??
                       scoreProjectMatch({
-                        profileSkills: profile?.skills.map((skill) => skill.name) ?? [],
+                        profileSkills: [],
                         query: activeQuery,
                         project,
                       });
@@ -179,24 +176,31 @@ export function SearchPage() {
                             <p className="project-card__eyebrow">Владелец: {project.ownerName}</p>
                             <h3>{project.title}</h3>
                           </div>
-                          {project.applicationStatus ? (
-                            <span className={`status-pill status-pill--${project.applicationStatus}`}>
-                              {applicationLabels[project.applicationStatus]}
-                            </span>
-                          ) : null}
+                          <div className="project-card__badges">
+                            {activeQuery ? (
+                              <span className="match-pill">Совпадение {project.matchPercent}%</span>
+                            ) : null}
+                            {project.applicationStatus ? (
+                              <span className={`status-pill status-pill--${project.applicationStatus}`}>
+                                {applicationLabels[project.applicationStatus]}
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                         <p className="project-card__description">{project.description}</p>
-                        <div className="match-panel" aria-label={`Совпадение ${match.score}%`}>
-                          <div className="match-score">
-                            <span className="match-score__value">{match.score}%</span>
-                            <span>совпадение</span>
+                        {activeQuery ? (
+                          <div className="match-panel" aria-label={`Совпадение ${match.score}%`}>
+                            <div className="match-score">
+                              <span className="match-score__value">{match.score}%</span>
+                              <span>совпадение</span>
+                            </div>
+                            <ul className="match-score__reasons">
+                              {match.reasons.map((reason) => (
+                                <li key={reason}>{reason}</li>
+                              ))}
+                            </ul>
                           </div>
-                          <ul className="match-score__reasons">
-                            {match.reasons.map((reason) => (
-                              <li key={reason}>{reason}</li>
-                            ))}
-                          </ul>
-                        </div>
+                        ) : null}
                         <dl className="project-card__meta">
                           <div>
                             <dt>Теги / стек</dt>

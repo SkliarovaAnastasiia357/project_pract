@@ -209,11 +209,9 @@ export function HomePage() {
           </article>
 
           <article className="sidebar-card sidebar-card--accent">
-            <p className="sidebar-card__eyebrow">Live demo</p>
-            <h3>Данные для защиты</h3>
-            <p>
-              Создает реальные проекты, кандидатов и заявки. Демо-набор очищается кнопкой или автоматически по TTL.
-            </p>
+            <p className="sidebar-card__eyebrow">Демо-данные</p>
+            <h3>Быстрый стенд</h3>
+            <p>Создает тестовые проекты, кандидатов и заявки для проверки поиска, откликов и состава команды.</p>
             {metrics?.demoExpiresAt ? (
               <p className="demo-expiry">Автоочистка: {new Date(metrics.demoExpiresAt).toLocaleString("ru-RU")}</p>
             ) : null}

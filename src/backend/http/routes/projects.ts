@@ -31,6 +31,44 @@ function searchPattern(query: string): string {
   return `%${query.replace(/[%_]/g, "\\$&")}%`;
 }
 
+function tokenizeSearchValue(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .split(/[^a-zа-я0-9+#.]+/i)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function getProjectMatchPercent(query: string, project: { stack: string; roles: string }): number {
+  const queryTokens = [...new Set(tokenizeSearchValue(query))];
+
+  if (queryTokens.length === 0) {
+    return 0;
+  }
+
+  const requirementTokens = new Set([
+    ...tokenizeSearchValue(project.stack),
+    ...tokenizeSearchValue(project.roles),
+  ]);
+
+  if (requirementTokens.size === 0) {
+    return 0;
+  }
+
+  const matchedCount = queryTokens.filter((token) => {
+    if (requirementTokens.has(token)) {
+      return true;
+    }
+
+    return token.length > 1 && [...requirementTokens].some((requirementToken) =>
+      requirementToken.includes(token) || token.includes(requirementToken),
+    );
+  }).length;
+
+  return Math.round((matchedCount / queryTokens.length) * 100);
+}
+
 export async function registerProjectRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/projects", { preHandler: requireAuth }, async (req) => {
     const rows = await app.deps.db
@@ -140,7 +178,20 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
           .orderBy(desc(projects.updatedAt))
       : await base.orderBy(desc(projects.updatedAt));
 
-    return rows.map((row) => ({
+    const rankedRows = rows
+      .map((row) => ({
+        ...row,
+        matchPercent: getProjectMatchPercent(query, row),
+      }))
+      .sort((left, right) => {
+        if (left.matchPercent !== right.matchPercent) {
+          return right.matchPercent - left.matchPercent;
+        }
+
+        return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+      });
+
+    return rankedRows.map((row) => ({
       id: row.id,
       title: row.title,
       description: row.description,
@@ -149,6 +200,7 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
       updatedAt: row.updatedAt,
       ownerId: row.ownerId,
       ownerName: row.ownerName,
+      matchPercent: row.matchPercent,
       applicationStatus: row.applicationStatus ?? null,
     }));
   });

@@ -13,6 +13,23 @@ export async function runWorkspaceSummaryTests(): Promise<void> {
   assert.equal(emptySummary.completionLabel, "Профиль только создан", "для пустого профиля должен быть базовый статус");
   assert.equal(emptySummary.cards[0]?.title, "0 навыков", "карточка навыков должна отражать текущее количество");
 
+  const participantSummary = getWorkspaceSummary({
+    hasBio: true,
+    skillsCount: 3,
+    projectsCount: 0,
+  });
+
+  assert.equal(
+    participantSummary.completionRatio,
+    100,
+    "профиль участника с описанием и навыками должен быть готов без собственного проекта",
+  );
+  assert.equal(
+    participantSummary.completionLabel,
+    "Профиль готов к поиску",
+    "собственный проект не должен влиять на статус заполненности профиля",
+  );
+
   const filledSummary = getWorkspaceSummary({
     hasBio: true,
     skillsCount: 4,

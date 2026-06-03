@@ -146,16 +146,10 @@ li {
 }
 
 .brand-mark {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  transform: rotate(45deg);
-  display: inline-block;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 22%, transparent 24%),
-    linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.92) 50%, transparent 55%),
-    linear-gradient(transparent 45%, rgba(255, 255, 255, 0.92) 50%, transparent 55%);
-  box-shadow: 0 0 14px rgba(164, 92, 255, 0.76);
+  width: 34px;
+  height: 34px;
+  display: block;
+  border-radius: 10px;
 }
 
 .brand-name {
@@ -539,7 +533,8 @@ li {
 .panel__header,
 .inline-form,
 .project-card__header,
-.project-card__actions {
+.project-card__actions,
+.project-card__badges {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -724,6 +719,7 @@ li {
   min-width: 16px;
 }
 
+.match-pill,
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -733,6 +729,11 @@ li {
   padding: 0 12px;
   font-size: 0.86rem;
   font-weight: 700;
+}
+
+.match-pill {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .status-pill--pending {

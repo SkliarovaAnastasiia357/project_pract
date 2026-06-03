@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="Teamnova">
+  <rect width="40" height="40" rx="10" fill="#ffffff"/>
+  <path d="M10 11h15.5c4.4 0 7.5 3.1 7.5 7.3 0 4.4-3.1 7.5-7.5 7.5h-4.1v3.2H15V16.4h-5V11Zm11.4 5.4v4h3.7c1.2 0 2-.8 2-2s-.8-2-2-2h-3.7Z" fill="#2477b8"/>
+  <path d="M9 29h6.5l15.6-18H24.6L9 29Z" fill="#e83f70"/>
+</svg>
