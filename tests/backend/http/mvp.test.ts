@@ -128,6 +128,19 @@ describeWithContainers("MVP profile, projects, search and applications", () => {
       title: "Teamnova Match",
       ownerName: "Owner",
       applicationStatus: null,
+      matchPercent: 100,
+    });
+
+    const titleOnlyProjects = await h.app.inject({
+      method: "GET",
+      url: "/api/search/projects?q=Teamnova",
+      headers: auth(participantToken),
+    });
+    expect(titleOnlyProjects.statusCode).toBe(200);
+    expect(titleOnlyProjects.json()[0]).toMatchObject({
+      id: projectId,
+      title: "Teamnova Match",
+      matchPercent: 0,
     });
 
     const application = await h.app.inject({

@@ -34,7 +34,6 @@ export function getWorkspaceSummary(input: WorkspaceSummaryInput): WorkspaceSumm
   const checkpoints = [
     input.hasBio,
     input.skillsCount > 0,
-    input.projectsCount > 0,
   ];
   const completedCount = checkpoints.filter(Boolean).length;
   const completionRatio = Math.round((completedCount / checkpoints.length) * 100);
@@ -56,7 +55,7 @@ export function getWorkspaceSummary(input: WorkspaceSummaryInput): WorkspaceSumm
       },
       {
         title: `${input.projectsCount} ${pluralize(input.projectsCount, "проект", "проекта", "проектов")}`,
-        caption: input.projectsCount > 0 ? "Есть что показать команде" : "Создайте первый проект для ленты",
+        caption: input.projectsCount > 0 ? "Есть что показать команде" : "Проекты нужны владельцам, не для заполненности профиля",
       },
       {
         title: input.hasBio ? "Описание заполнено" : "Описание пустое",

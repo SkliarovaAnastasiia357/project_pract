@@ -14,11 +14,14 @@ export type MatchScoreInput = {
 export type ProjectMatchScore = ProjectMatch;
 
 function normalize(value: string): string {
-  return value.trim().toLowerCase();
+  return value.trim().toLowerCase().replace(/ё/g, "е");
 }
 
-function includesToken(haystack: string, needle: string): boolean {
-  return normalize(haystack).includes(normalize(needle));
+function tokenize(value: string): string[] {
+  return normalize(value)
+    .split(/[^a-zа-я0-9+#.]+/i)
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
 function unique(values: string[]): string[] {
@@ -38,78 +41,68 @@ function unique(values: string[]): string[] {
   return result;
 }
 
-function splitList(value: string): string[] {
-  return value
-    .split(/[,\n;/|]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+function hasTokenMatch(token: string, values: string[]): boolean {
+  for (const value of values) {
+    if (value === token) {
+      return true;
+    }
 
-function findSkillMatches(profileSkills: string[], project: MatchScoreInput["project"]): string[] {
-  const searchableProjectText = `${project.stack} ${project.roles} ${project.description}`;
-  return unique(profileSkills).filter((skill) => includesToken(searchableProjectText, skill));
-}
-
-function findRoleMatches(query: string, projectRoles: string): string[] {
-  const normalizedQuery = normalize(query);
-  if (!normalizedQuery) {
-    return [];
+    if (token.length > 1 && (value.includes(token) || token.includes(value))) {
+      return true;
+    }
   }
 
-  return splitList(projectRoles)
-    .filter((role) => includesToken(role, normalizedQuery) || includesToken(normalizedQuery, role))
-    .map((role) => role.replace(/\s+developer$/i, "").trim())
-    .filter(Boolean);
+  return false;
 }
 
-function findQueryMatches(query: string, project: MatchScoreInput["project"]): string[] {
-  const normalizedQuery = normalize(query);
-  if (!normalizedQuery) {
-    return [];
+function findMatchedQueryTokens(query: string, project: MatchScoreInput["project"]): string[] {
+  const queryTokens = unique(tokenize(query));
+  const requirementTokens = [...new Set([...tokenize(project.stack), ...tokenize(project.roles)])];
+
+  return queryTokens.filter((token) => hasTokenMatch(token, requirementTokens));
+}
+
+function findMatchedFields(matchedTokens: string[], project: MatchScoreInput["project"]): string[] {
+  const stackTokens = tokenize(project.stack);
+  const roleTokens = tokenize(project.roles);
+  const fields: string[] = [];
+
+  if (matchedTokens.some((token) => hasTokenMatch(token, roleTokens))) {
+    fields.push("роли");
   }
 
-  const fields = [
-    ["название", project.title],
-    ["описание", project.description],
-    ["стек", project.stack],
-    ["роли", project.roles],
-  ] as const;
+  if (matchedTokens.some((token) => hasTokenMatch(token, stackTokens))) {
+    fields.push("стек");
+  }
 
-  return fields.filter(([, value]) => includesToken(value, normalizedQuery)).map(([label]) => label);
+  return fields;
 }
 
 export function scoreProjectMatch(input: MatchScoreInput): ProjectMatchScore {
-  const matchedSkills = findSkillMatches(input.profileSkills, input.project);
-  const matchedRoles = unique(findRoleMatches(input.query, input.project.roles));
-  const matchedQuery = findQueryMatches(input.query, input.project);
-
-  const skillScore = Math.min(65, matchedSkills.length * 35);
-  const roleScore = matchedRoles.length > 0 ? 15 : 0;
-  const queryScore = Math.min(20, matchedQuery.length * 10);
-  const score = Math.min(100, skillScore + roleScore + queryScore);
+  const queryTokens = unique(tokenize(input.query));
+  const matchedQuery = findMatchedQueryTokens(input.query, input.project);
+  const matchedRoles = matchedQuery.filter((token) => hasTokenMatch(token, tokenize(input.project.roles)));
+  const matchedFields = findMatchedFields(matchedQuery, input.project);
+  const score = queryTokens.length > 0 ? Math.round((matchedQuery.length / queryTokens.length) * 100) : 0;
   const reasons: string[] = [];
 
-  if (matchedSkills.length > 0) {
-    reasons.push(`Совпали навыки профиля: ${matchedSkills.join(", ")}`);
-  }
-
-  if (matchedRoles.length > 0) {
-    reasons.push(`Запрос совпал с ролью: ${matchedRoles.join(", ")}`);
-  }
-
   if (matchedQuery.length > 0) {
-    reasons.push(`Запрос найден в полях проекта: ${matchedQuery.join(", ")}`);
+    reasons.push(`Совпали токены запроса: ${matchedQuery.join(", ")}`);
+  }
+
+  if (matchedFields.length > 0) {
+    reasons.push(`Учитывались только поля: ${matchedFields.join(", ")}`);
   }
 
   if (reasons.length === 0) {
-    reasons.push("Совпадение слабое: заполните навыки или уточните запрос.");
+    reasons.push("Совпадений в ролях и стеке нет.");
   }
 
   return {
     score,
-    matchedSkills,
+    matchedSkills: [],
     matchedRoles,
-    matchedQuery,
+    matchedQuery: matchedFields,
     reasons,
   };
 }

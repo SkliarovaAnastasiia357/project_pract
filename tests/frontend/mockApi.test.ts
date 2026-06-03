@@ -149,12 +149,24 @@ export async function runMockApiTests(): Promise<void> {
         roles: "QA",
         updatedAt: "2026-05-12T00:00:00.000Z",
       },
+      {
+        id: "project-title-only",
+        userId: "user-legacy-owner",
+        title: "React Title Only",
+        description: "Title match must not increase match percent.",
+        stack: "Go",
+        roles: "Backend developer",
+        updatedAt: "2026-05-13T00:00:00.000Z",
+      },
     ],
     sessions: [{ token: "legacy-token", userId: "user-legacy-participant" }],
   });
 
   const legacyResults = await mockApi.searchProjects("legacy-token", { query: "React" });
-  assert.equal(legacyResults.length, 1, "старый mock payload без applications должен мигрировать на чтении");
+  assert.equal(legacyResults.length, 2, "старый mock payload без applications должен мигрировать на чтении");
+  assert.equal(legacyResults[0]!.id, "project-legacy", "проект с совпадением в стеке должен быть выше совпадения только в названии");
+  assert.equal(legacyResults[0]!.matchPercent, 100, "совпадение в стеке должно давать полный процент для одного токена");
+  assert.equal(legacyResults[1]!.matchPercent, 0, "совпадение в названии не должно повышать процент мэтчинга");
   assert.equal(legacyResults[0]!.applicationStatus, null, "у legacy проекта без заявок должен быть пустой статус");
 
   resetMockApiState();

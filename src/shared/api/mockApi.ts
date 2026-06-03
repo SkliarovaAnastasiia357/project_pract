@@ -1,4 +1,5 @@
 import { normalizeEmail, validateLoginForm, validateRegistrationForm } from "../../features/auth/forms.ts";
+import { getProjectMatchPercent } from "../../features/projects/project-match.ts";
 import { validateProjectInput } from "../../features/projects/project-form.ts";
 import { clearKey, readJson, writeJson } from "../storage.ts";
 import type {
@@ -199,7 +200,20 @@ function matchesQuery(values: string[], input: SearchInput): boolean {
   return values.some((value) => value.toLowerCase().includes(query));
 }
 
-function toProjectSearchResult(database: MockDatabase, project: ProjectRecord, userId: string): ProjectSearchResult {
+function compareProjectSearchResults(left: ProjectSearchResult, right: ProjectSearchResult): number {
+  if (left.matchPercent !== right.matchPercent) {
+    return right.matchPercent - left.matchPercent;
+  }
+
+  return right.updatedAt.localeCompare(left.updatedAt);
+}
+
+function toProjectSearchResult(
+  database: MockDatabase,
+  project: ProjectRecord,
+  userId: string,
+  query: string,
+): ProjectSearchResult {
   const owner = database.users.find((entry) => entry.id === project.userId);
   const application = database.applications.find((entry) => entry.projectId === project.id && entry.applicantId === userId);
 
@@ -212,6 +226,11 @@ function toProjectSearchResult(database: MockDatabase, project: ProjectRecord, u
     updatedAt: project.updatedAt,
     ownerId: project.userId,
     ownerName: owner?.name ?? "Пользователь",
+    matchPercent: getProjectMatchPercent({
+      query,
+      stack: project.stack,
+      roles: project.roles,
+    }),
     applicationStatus: application?.status ?? null,
   };
 }
@@ -564,8 +583,8 @@ export const mockApi: ApiClient = {
       .filter((project) =>
         matchesQuery([project.title, project.description, project.stack, project.roles], input),
       )
-      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-      .map((project) => toProjectSearchResult(database, project, user.id));
+      .map((project) => toProjectSearchResult(database, project, user.id, input.query))
+      .sort(compareProjectSearchResults);
   },
 
   async searchUsers(token, input) {

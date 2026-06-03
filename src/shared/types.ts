@@ -44,6 +44,7 @@ export type ProjectMatch = {
 export type ProjectSearchResult = Project & {
   ownerId: string;
   ownerName: string;
+  matchPercent: number;
   applicationStatus: ApplicationStatus | null;
   match?: ProjectMatch;
 };
