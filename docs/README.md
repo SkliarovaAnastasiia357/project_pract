@@ -45,6 +45,9 @@
   <a href="http://46.173.25.212/login">TEAMNOVA</a>
 </p>
 
+<p align="center">
+    <img src="qr_teamnova.png" alt="ссылка" width=180>
+</p>
 
 Портреты аудитории
 
