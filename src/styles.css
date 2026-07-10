@@ -559,6 +559,7 @@ li {
 }
 
 .project-grid,
+.candidate-list,
 .sidebar-stack,
 .content-stack {
   display: grid;
@@ -571,6 +572,96 @@ li {
 
 .project-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.candidate-toolbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.candidate-filter {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.candidate-filter input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.candidate-list {
+  gap: 14px;
+}
+
+.candidate-card {
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+}
+
+.candidate-card__rank {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(164, 92, 255, 0.3);
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.candidate-card__body {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.candidate-card h3 {
+  text-wrap: balance;
+}
+
+.candidate-card__score {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.candidate-card__score strong {
+  color: var(--text);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.75rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.candidate-card__bio,
+.candidate-card__reasons {
+  text-wrap: pretty;
+}
+
+.candidate-card__bio {
+  margin: 0;
+  color: var(--muted);
+}
+
+.candidate-card__reasons {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
 }
 
 .overview-grid {
@@ -888,6 +979,27 @@ li {
 
   .inline-form {
     grid-template-columns: 1fr;
+  }
+
+  .candidate-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-filter {
+    width: 100%;
+  }
+
+  .candidate-card {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-card__rank {
+    width: 36px;
+    height: 36px;
+  }
+
+  .candidate-card__score {
+    justify-items: start;
   }
 
 }

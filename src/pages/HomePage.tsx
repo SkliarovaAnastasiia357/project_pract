@@ -262,6 +262,9 @@ export function HomePage() {
                       <h3>{project.title}</h3>
                     </div>
                     <div className="project-card__actions">
+                      <Link className="primary-button primary-button--compact" to={`/projects/${project.id}/candidates`}>
+                        Подобрать команду
+                      </Link>
                       <Link className="ghost-button ghost-button--compact" to={`/projects/${project.id}/edit`}>
                         Редактировать
                       </Link>
