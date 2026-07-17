@@ -2,7 +2,7 @@ import type { ReactNode, UIEvent } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
-import { buildNavigationMenu } from "../shared/navigation.ts";
+import { buildNavigationMenu, routeScrollReset } from "../shared/navigation.ts";
 import { BrandMark } from "../shared/components/BrandMark.tsx";
 import { useAuth } from "./providers/AuthProvider.tsx";
 
@@ -22,6 +22,10 @@ export function AppShell({ title, description, actions, aside, children }: AppSh
   const { logout, session } = useAuth();
   const navigation = buildNavigationMenu(location.pathname);
   const isProfilePage = location.pathname === "/profile";
+
+  useLayoutEffect(() => {
+    window.scrollTo(routeScrollReset);
+  }, [location.pathname]);
 
   useLayoutEffect(() => {
     const navigationElement = navigationRef.current;

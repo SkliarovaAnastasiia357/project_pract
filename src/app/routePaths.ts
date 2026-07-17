@@ -8,4 +8,5 @@ export const routePaths = [
   "/requests",
   "/projects/new",
   "/projects/:id/edit",
+  "/projects/:id/candidates",
 ] as const;

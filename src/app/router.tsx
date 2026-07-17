@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { LoadingBlock } from "../shared/components/LoadingBlock.tsx";
 import { BrandMark } from "../shared/components/BrandMark.tsx";
+import { CandidateMatchingPage } from "../pages/CandidateMatchingPage.tsx";
 import { HomePage } from "../pages/HomePage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { ProfilePage } from "../pages/ProfilePage.tsx";
@@ -96,6 +97,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ProjectEditorPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/projects/:id/candidates",
+    element: (
+      <ProtectedRoute>
+        <CandidateMatchingPage />
       </ProtectedRoute>
     ),
   },

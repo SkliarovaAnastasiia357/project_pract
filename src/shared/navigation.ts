@@ -1,5 +1,11 @@
 import type { NavigationItem } from "./types.ts";
 
+export const routeScrollReset = {
+  top: 0,
+  left: 0,
+  behavior: "auto",
+} as const;
+
 export function buildNavigationMenu(currentPath: string): NavigationItem[] {
   const items = [
     { label: "Главная", path: "/home", kind: "link" as const },

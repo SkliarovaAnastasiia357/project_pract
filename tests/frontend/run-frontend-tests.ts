@@ -1,4 +1,5 @@
 import { runAppRoutesTests } from "./appRoutes.test.ts";
+import { runCandidateMatchTests } from "./candidateMatch.test.ts";
 import { runHttpApiTests } from "./httpApi.test.ts";
 import { runMockApiTests } from "./mockApi.test.ts";
 import { runMvpCycleTests } from "./mvpCycle.test.ts";
@@ -11,6 +12,7 @@ import { runWorkspaceSummaryTests } from "./workspaceSummary.test.ts";
 
 try {
   await runAppRoutesTests();
+  runCandidateMatchTests();
   await runMockApiTests();
   await runMvpCycleTests();
   runMatchScoreTests();
